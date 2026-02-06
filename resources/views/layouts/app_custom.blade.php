@@ -38,7 +38,7 @@
             </a>
 
             @auth
-            <a href="{{ route('pinjaman') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->is('pinjaman*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+            <a href="{{ route('pinjaman') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->is('pinjaman*') && auth()->user()->role !== 'admin' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                 <span class="text-lg">⏳</span> Pinjaman Saya
             </a>
 
@@ -46,11 +46,11 @@
             <div class="pt-6 mt-6 border-t border-slate-800">
                 <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Administrator</p>
                 
-                <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->is('admin/inventori*') ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 hover:text-white' }}">
+                <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->is('admin/inventori*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                     <span class="text-lg">📊</span> Inventori
                 </a>
 
-                <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->is('admin/semua-pinjaman*') ? 'bg-red-600 text-white' : 'hover:bg-slate-800 hover:text-white' }}">
+                <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') || request()->is('pinjaman*') ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                     <span class="text-lg">🛡️</span> Panel Admin
                 </a>
             </div>
@@ -60,18 +60,18 @@
 
         <div class="p-4 bg-slate-950/50">
             @auth
-                <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-2xl mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white uppercase">
+                <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-2xl mb-3 border border-white/5">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white uppercase shadow-inner">
                         {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name }}</p>
-                        <p class="text-[10px] text-slate-500 truncate uppercase tracking-widest">{{ auth()->user()->role }}</p>
+                        <p class="text-sm font-bold text-white truncate leading-tight">{{ auth()->user()->name }}</p>
+                        <p class="text-[10px] text-slate-500 truncate uppercase tracking-widest font-semibold">{{ auth()->user()->role }}</p>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full text-xs font-bold text-slate-400 hover:text-red-400 py-2 transition-colors">
+                    <button type="submit" class="w-full text-[10px] font-black text-slate-500 hover:text-red-400 py-2 transition-all tracking-[0.2em]">
                         KELUAR APLIKASI
                     </button>
                 </form>
@@ -90,15 +90,27 @@
 
     <main class="flex-1 ml-64 min-h-screen">
         <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 py-4 px-10 flex justify-between items-center">
-            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-tighter">
+            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-tight">
                 {{ now()->translatedFormat('l, d F Y') }}
             </h2>
             <div class="flex items-center gap-4">
-                <span class="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full uppercase tracking-wider">Sistem Aktif</span>
+                <span class="text-[10px] font-black bg-green-100 text-green-700 px-3 py-1 rounded-full uppercase tracking-widest">Sistem Aktif</span>
             </div>
         </header>
 
         <div class="p-10">
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-50 border border-green-100 text-green-700 rounded-2xl font-bold text-sm">
+                    ✅ {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl font-bold text-sm">
+                    ❌ {{ session('error') }}
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </main>

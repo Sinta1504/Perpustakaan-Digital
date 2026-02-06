@@ -1,107 +1,61 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
-                </div>
-
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-
-                    @if(auth()->user()->role === 'admin')
-                        <x-nav-link :href="route('admin.inventory')" :active="request()->routeIs('admin.inventory')">
-                            {{ __('Inventori & User') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.loans')" :active="request()->routeIs('admin.loans')">
-                            {{ __('Semua Pinjaman') }}
-                        </x-nav-link>
-                    @endif
-                </div>
+<nav x-data="{ open: false }" class="flex flex-col h-screen bg-[#111827] text-slate-400 w-64 fixed left-0 top-0 z-[999]">
+    <div class="p-6 mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <i class="fas fa-book-open text-white text-xs"></i>
             </div>
-
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+            <span class="text-white font-black text-xl tracking-tighter">E-LIB</span>
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+    <div class="px-4 space-y-2 flex-1 overflow-y-auto">
+        <p class="px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Menu Utama</p>
+        
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-6 py-4 rounded-2xl transition-all {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white shadow-lg' : 'hover:text-white hover:bg-slate-800/50' }}">
+            <i class="fas fa-home w-5"></i>
+            <span class="font-bold text-sm">Beranda</span>
+        </a>
 
-            @if(auth()->user()->role === 'admin')
-                <x-responsive-nav-link :href="route('admin.inventory')" :active="request()->routeIs('admin.inventory')">
-                    {{ __('Inventori & User') }}
-                </x-responsive-nav-link>
-            @endif
-        </div>
+        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-6 py-4 rounded-2xl transition-all {{ request()->routeIs('profile.edit') ? 'bg-blue-600 text-white shadow-lg' : 'hover:text-white hover:bg-slate-800/50' }}">
+            <i class="fas fa-id-card w-5"></i>
+            <span class="font-bold text-sm">Profil Akun</span>
+        </a>
 
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+        <a href="#" class="flex items-center gap-3 px-6 py-4 rounded-2xl hover:text-white hover:bg-slate-800/50 transition-all">
+            <i class="fas fa-th-large w-5"></i>
+            <span class="font-bold text-sm">Katalog</span>
+        </a>
+
+        @if(auth()->user()->role === 'admin')
+            <div class="pt-6 mt-6 border-t border-slate-800">
+                <p class="px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Administrator</p>
+                <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-6 py-4 rounded-2xl hover:text-white hover:bg-slate-800/50 transition-all">
+                    <i class="fas fa-boxes w-5"></i>
+                    <span class="font-bold text-sm">Inventori</span>
+                </a>
             </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
-        </div>
+        @endif
     </div>
-</nav>
+
+    <div class="p-4 border-t border-slate-800 bg-[#0f172a] relative z-[999]">
+    <a href="/profile" class="block w-full pointer-events-auto cursor-pointer">
+        <div class="flex items-center gap-3 p-3 rounded-[1.5rem] bg-slate-900 hover:bg-blue-600/20 border border-slate-800 hover:border-blue-500/50 transition-all">
+            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-lg uppercase">
+                {{ substr(Auth::user()->name, 0, 1) }}
+            </div>
+            
+            <div class="overflow-hidden flex-1 text-left">
+                <p class="text-white font-black text-xs truncate">{{ Auth::user()->name }}</p>
+                <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest">{{ Auth::user()->role ?? 'User' }}</p>
+            </div>
+            <i class="fas fa-chevron-right text-[10px] text-slate-700"></i>
+        </div>
+    </a>
+
+    <form method="POST" action="{{ route('logout') }}" class="mt-2">
+        @csrf
+        <button type="submit" class="w-full text-center py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-red-500 transition-all">
+            Keluar Aplikasi
+        </button>
+    </form>
+</div>

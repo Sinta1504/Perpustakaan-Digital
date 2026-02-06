@@ -31,12 +31,25 @@ class LoanController extends Controller
     }
 
     /**
-     * Daftar Pinjaman User yang Sedang Login
+     * Daftar Pinjaman: User melihat MILIKNYA sendiri
      */
     public function index()
     {
-        $loans = Loan::with('book')->where('user_id', Auth::id())->latest()->get();
-        return view('pinjaman', compact('loans'));
+        $loans = Loan::with(['user', 'book'])
+                    ->where('user_id', Auth::id())
+                    ->latest()
+                    ->get();
+
+        return view('loans.index', compact('loans'));
+    }
+
+    /**
+     * FUNGSI ADMIN: Admin melihat SEMUA pinjaman
+     */
+    public function allLoans()
+    {
+        $loans = Loan::with(['user', 'book'])->latest()->get();
+        return view('loans.index', compact('loans'));
     }
 
     /**
@@ -73,63 +86,48 @@ class LoanController extends Controller
             'status' => 'dipinjam',
         ]);
 
-        // Kurangi stok buku secara otomatis
+        // Kurangi stok menggunakan kolom 'stok' sesuai database Anda
         $book->decrement('stok');
 
         return redirect()->route('pinjaman')->with('success', 'Buku berhasil dipinjam!');
     }
 
     /**
-     * Memproses Pengembalian Buku
+     * FUNGSI PENGEMBALIAN BUKU (DIPERBAIKI)
+     * Digunakan oleh Admin (Selesaikan) dan User (Kembalikan)
      */
-    public function returnBook(Loan $loan)
+        public function returnBook($id)
     {
-        if ($loan->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
-            abort(403);
+        $loan = Loan::findOrFail($id);
+        
+        if (auth()->user()->id !== $loan->user_id && auth()->user()->role !== 'admin') {
+            return back()->with('error', 'Akses ditolak.');
         }
 
-        // Tambah kembali stok buku saat dikembalikan
-        $loan->book->increment('stok');
+        // PERBAIKAN: Gunakan 'dikembalikan' jika 'kembali' menyebabkan truncation error
+        $loan->update([
+            'status' => 'dikembalikan', 
+            'tanggal_kembali' => now()
+        ]);
 
-        $loan->update(['status' => 'dikembalikan']);
-        return redirect()->back()->with('success', 'Buku berhasil dikembalikan!');
+        if ($loan->book) {
+            $loan->book->increment('stok');
+        }
+
+        return back()->with('success', 'Buku berhasil dikembalikan!');
     }
-
     /*
     |--------------------------------------------------------------------------
-    | FUNGSI KHUSUS ADMIN
+    | FUNGSI KHUSUS ADMIN LAINNYA
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Melihat Semua Transaksi Peminjaman (Global)
-     */
-    public function allLoans()
-    {
-        $loans = Loan::with(['book', 'user'])->latest()->get();
-        return view('admin.semua_pinjaman', compact('loans'));
-    }
-
-    /**
-     * Statistik Inventori & Manajemen User Inaktif
-     */
     public function inventory()
     {
-        // 1. Buku yang paling sering dipinjam (Top 5)
-        $frequentBooks = Book::withCount('loans')
-            ->orderBy('loans_count', 'desc')
-            ->take(5)->get();
-
-        // 2. Buku dengan kondisi rusak
+        $frequentBooks = Book::withCount('loans')->orderBy('loans_count', 'desc')->take(5)->get();
         $damagedBooks = Book::where('kondisi', 'rusak')->get();
+        $unreturnedBooks = Loan::with(['book', 'user'])->where('status', 'dipinjam')->whereDate('tanggal_kembali', '<', now())->get();
 
-        // 3. Buku yang belum dikembalikan (melewati tenggat waktu hari ini)
-        $unreturnedBooks = Loan::with(['book', 'user'])
-            ->where('status', 'dipinjam')
-            ->whereDate('tanggal_kembali', '<', now())
-            ->get();
-
-        // 4. User tidak aktif (tidak meminjam buku dalam 5 bulan terakhir)
         $inactiveUsers = User::whereDoesntHave('loans', function($query) {
             $query->where('tanggal_pinjam', '>=', now()->subMonths(5));
         })->where('role', '!=', 'admin')->get();
@@ -137,16 +135,9 @@ class LoanController extends Controller
         return view('admin.inventory', compact('frequentBooks', 'damagedBooks', 'unreturnedBooks', 'inactiveUsers'));
     }
 
-    /**
-     * Mengubah Status Aktif/Nonaktif User
-     */
     public function toggleUserStatus(User $user)
     {
-        // Pastikan kolom 'is_active' sudah ada di tabel users
-        $user->update([
-            'is_active' => !$user->is_active
-        ]);
-
-        return back()->with('success', 'Status akun ' . $user->name . ' berhasil diperbarui!');
+        $user->update(['is_active' => !$user->is_active]);
+        return back()->with('success', 'Status akun berhasil diperbarui!');
     }
 }

@@ -16,50 +16,58 @@ Route::get('/katalog/{book}', [BookController::class, 'show'])->name('books.show
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes (Semua yang login: Admin & User)
+| Authenticated Routes (Semua Pengguna Terdaftar)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    // Dashboard & Profil
+    // Dashboard Utama
     Route::get('/dashboard', [LoanController::class, 'dashboard'])->name('dashboard');
-    Route::get('/profil', function () { return view('profil'); })->name('profil');
     
-    // Fitur Peminjaman untuk User
+    /**
+     * FITUR PROFIL SAYA
+     * Dapat diakses oleh Admin, Sinta, Zara, dan Andhika.
+     */
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    /**
+     * FITUR PEMINJAMAN & PENGEMBALIAN (UNTUK SEMUA USER)
+     * Perbaikan: Memastikan rute 'return' dapat diakses secara global di dalam auth.
+     */
     Route::get('/pinjaman', [LoanController::class, 'index'])->name('pinjaman');
     Route::get('/pinjam/{book}', [LoanController::class, 'create'])->name('loans.create');
     Route::post('/pinjam/{book}', [LoanController::class, 'store'])->name('loans.store');
+    
+    // Rute utama pengembalian buku untuk user biasa (Sinta, dkk)
     Route::patch('/loans/{loan}/return', [LoanController::class, 'returnBook'])->name('loans.return');
 
     /*
     |----------------------------------------------------------------------
-    | Khusus Admin Only
+    | KHUSUS ADMIN ONLY
     |----------------------------------------------------------------------
+    | Rute di bawah ini hanya bisa diakses oleh akun dengan role 'admin'.
     */
     Route::middleware(['admin'])->group(function () {
-        // Dashboard Admin & Laporan
+        
+        // Panel Manajemen Pinjaman Admin
         Route::get('/admin/semua-pinjaman', [LoanController::class, 'allLoans'])->name('admin.loans');
         
-        // --- ROUTE INVENTORI ---
+        // Admin menggunakan POST untuk tombol "Selesaikan" (Opsional, merujuk ke fungsi yang sama)
+        Route::post('/admin/loans/return/{id}', [LoanController::class, 'returnBook'])->name('admin.loans.return');
+
+        // Inventori & Manajemen User
         Route::get('/admin/inventori', [LoanController::class, 'inventory'])->name('admin.inventory');
         Route::patch('/admin/user/{user}/toggle', [LoanController::class, 'toggleUserStatus'])->name('admin.user.toggle');
 
-        // CRUD Buku
+        // CRUD Manajemen Buku
         Route::get('/buku/tambah', [BookController::class, 'create'])->name('books.create');
         Route::post('/buku/tambah', [BookController::class, 'store'])->name('books.store');
         Route::get('/buku/{book}/edit', [BookController::class, 'edit'])->name('books.edit');
         Route::put('/buku/{book}', [BookController::class, 'update'])->name('books.update');
         Route::delete('/buku/{book}', [BookController::class, 'destroy'])->name('books.destroy');
     });
-
-    /*
-    |----------------------------------------------------------------------
-    | Profile Settings
-    |----------------------------------------------------------------------
-    */
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
