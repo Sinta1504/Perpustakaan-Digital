@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container mx-auto">
+    {{-- Header Halaman --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
         <div>
             <h2 class="text-3xl font-black text-slate-900 uppercase italic">Daftar Pinjaman</h2>
@@ -13,7 +14,16 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+    {{-- Notifikasi Sukses --}}
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-green-100 flex items-center gap-3">
+            <i class="fas fa-check-circle text-lg"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Tabel Utama --}}
+    <div class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden mb-12">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -22,7 +32,7 @@
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Peminjam</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Tenggat</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi</th>
+                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi & Rating</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -40,12 +50,8 @@
                                     @endif
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="font-black text-slate-900 text-sm leading-tight uppercase italic">
-                                        {{ $loan->book->judul ?? 'Buku Dihapus' }}
-                                    </span>
-                                    <span class="text-[10px] text-slate-400 font-bold uppercase italic">
-                                        {{ $loan->book->penulis ?? 'Unknown Author' }}
-                                    </span>
+                                    <span class="font-black text-slate-900 text-sm leading-tight uppercase italic">{{ $loan->book->judul ?? 'Buku Dihapus' }}</span>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase italic">{{ $loan->book->penulis ?? 'Unknown Author' }}</span>
                                 </div>
                             </div>
                         </td>
@@ -67,7 +73,6 @@
                         </td>
 
                         <td class="px-8 py-5">
-                            {{-- PASTIKAN STATUS 'dipinjam' SESUAI DENGAN DATABASE --}}
                             @if($loan->status === 'dipinjam')
                                 <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">Sedang Dipinjam</span>
                             @else
@@ -86,11 +91,20 @@
                                     </button>
                                 </form>
                             @else
-                                {{-- INI ADALAH TANDA CENTANG YANG ANDA INGINKAN --}}
-                                <div class="flex items-center justify-center gap-2 text-green-500 bg-green-50 py-2 rounded-xl border border-green-100 w-32 mx-auto">
-                                    <span class="text-sm">✅</span>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Selesai</span>
-                                </div>
+                                <form action="{{ route('feedback.store') }}" method="POST" class="flex flex-col gap-2 items-center bg-slate-50 p-3 rounded-2xl border border-slate-100 w-full max-w-[180px] mx-auto">
+                                    @csrf
+                                    <input type="hidden" name="book_id" value="{{ $loan->book_id }}">
+                                    <input type="hidden" name="kategori" value="saran">
+                                    <select name="rating" required class="text-[10px] font-black border-slate-200 rounded-lg p-1 w-full outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
+                                        <option value="5">⭐⭐⭐⭐⭐</option>
+                                        <option value="4">⭐⭐⭐⭐</option>
+                                        <option value="3">⭐⭐⭐</option>
+                                        <option value="2">⭐⭐</option>
+                                        <option value="1">⭐</option>
+                                    </select>
+                                    <input type="text" name="pesan" required placeholder="Review buku..." class="text-[10px] border-slate-200 rounded-lg p-2 w-full outline-none focus:ring-1 focus:ring-blue-500 font-medium italic">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black py-2 px-3 rounded-lg uppercase w-full shadow-sm transition-colors">Kirim Rating</button>
+                                </form>
                             @endif
                         </td>
                     </tr>
@@ -99,7 +113,6 @@
                         <td colspan="5" class="py-32 text-center">
                             <div class="text-6xl mb-6">📬</div>
                             <h3 class="text-xl font-black text-slate-900 uppercase italic">Belum ada riwayat</h3>
-                            <p class="text-slate-400 font-medium">Data peminjaman akan muncul di sini setelah peminjaman dilakukan.</p>
                         </td>
                     </tr>
                     @endforelse

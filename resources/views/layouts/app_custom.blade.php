@@ -10,6 +10,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -42,6 +44,11 @@
                 <span class="text-lg">⏳</span> Pinjaman Saya
             </a>
 
+            {{-- MENU BARU: HUBUNGI KAMI --}}
+            <a href="{{ route('contact.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('contact.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                <span class="text-lg">📞</span> Hubungi Kami
+            </a>
+
             @if(auth()->user()->role === 'admin')
             <div class="pt-6 mt-6 border-t border-slate-800">
                 <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Administrator</p>
@@ -50,8 +57,12 @@
                     <span class="text-lg">📊</span> Inventori
                 </a>
 
-                <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') || request()->is('pinjaman*') ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') || (request()->is('pinjaman*') && auth()->user()->role === 'admin') ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                     <span class="text-lg">🛡️</span> Panel Admin
+                </a>
+
+                <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                    <span class="text-lg">💬</span> Suara Peminjam
                 </a>
             </div>
             @endif

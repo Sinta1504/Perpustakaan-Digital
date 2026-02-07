@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FeedbackController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,35 +27,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     /**
      * FITUR PROFIL SAYA
-     * Dapat diakses oleh Admin, Sinta, Zara, dan Andhika.
      */
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     /**
-     * FITUR PEMINJAMAN & PENGEMBALIAN (UNTUK SEMUA USER)
-     * Perbaikan: Memastikan rute 'return' dapat diakses secara global di dalam auth.
+     * FITUR PEMINJAMAN & PENGEMBALIAN
      */
     Route::get('/pinjaman', [LoanController::class, 'index'])->name('pinjaman');
     Route::get('/pinjam/{book}', [LoanController::class, 'create'])->name('loans.create');
     Route::post('/pinjam/{book}', [LoanController::class, 'store'])->name('loans.store');
     
-    // Rute utama pengembalian buku untuk user biasa (Sinta, dkk)
+    // Rute utama pengembalian buku
     Route::patch('/loans/{loan}/return', [LoanController::class, 'returnBook'])->name('loans.return');
+
+    /**
+     * FITUR HUBUNGI KAMI & FEEDBACK
+     * create: Menampilkan form (Halaman Hubungi Kami)
+     * store: Menyimpan rating buku atau saran sistem
+     */
+    Route::get('/hubungi-kami', [FeedbackController::class, 'create'])->name('contact.index');
+    Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 
     /*
     |----------------------------------------------------------------------
     | KHUSUS ADMIN ONLY
     |----------------------------------------------------------------------
-    | Rute di bawah ini hanya bisa diakses oleh akun dengan role 'admin'.
     */
     Route::middleware(['admin'])->group(function () {
         
+        // Manajemen Feedback Admin
+        Route::get('/admin/feedback', [FeedbackController::class, 'index'])->name('admin.feedback.index');
+        Route::delete('/admin/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('admin.feedback.destroy');
+
         // Panel Manajemen Pinjaman Admin
         Route::get('/admin/semua-pinjaman', [LoanController::class, 'allLoans'])->name('admin.loans');
         
-        // Admin menggunakan POST untuk tombol "Selesaikan" (Opsional, merujuk ke fungsi yang sama)
+        // Admin menggunakan POST untuk tombol "Selesaikan"
         Route::post('/admin/loans/return/{id}', [LoanController::class, 'returnBook'])->name('admin.loans.return');
 
         // Inventori & Manajemen User
