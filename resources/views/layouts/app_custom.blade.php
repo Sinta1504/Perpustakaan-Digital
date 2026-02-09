@@ -44,7 +44,7 @@
                 <span class="text-lg">⏳</span> Pinjaman Saya
             </a>
 
-            {{-- MENU BARU: HUBUNGI KAMI --}}
+            {{-- MENU HUBUNGI KAMI --}}
             <a href="{{ route('contact.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('contact.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                 <span class="text-lg">📞</span> Hubungi Kami
             </a>
