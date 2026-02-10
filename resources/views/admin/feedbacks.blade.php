@@ -40,9 +40,23 @@
                 </div>
 
                 <div class="md:w-2/3 flex flex-col">
+                    {{-- INFO BUKU DAN PENULIS (DI PERBAIKI DI SINI) --}}
+                    <div class="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                        <img src="{{ $item->book->cover_url ?? asset('storage/'.$item->book->cover) }}" 
+                             class="w-12 h-16 object-cover rounded-xl shadow-md border-2 border-white"
+                             onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
+                        <div>
+                            <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Mengulas Buku:</p>
+                            <h4 class="font-bold text-slate-900 leading-tight">{{ $item->book->judul }}</h4>
+                            <p class="text-xs text-slate-500 font-medium italic">Karya: {{ $item->book->penulis }}</p>
+                        </div>
+                    </div>
+
                     {{-- Pesan dari User --}}
-                    <div class="bg-slate-50 p-6 rounded-[2rem] mb-6 border border-slate-100 italic text-slate-600 text-sm leading-relaxed shadow-inner">
-                        "{{ $item->message }}"
+                    <div class="bg-white p-6 rounded-[2rem] mb-6 border border-blue-50 italic text-slate-600 text-sm leading-relaxed shadow-sm relative">
+                        <span class="absolute -top-3 left-6 bg-white px-2 text-blue-300 text-2xl font-serif">“</span>
+                        {{ $item->pesan }}
+                        <span class="absolute -bottom-6 right-6 text-blue-300 text-2xl font-serif">”</span>
                     </div>
 
                     {{-- Logika Tampilan Balasan --}}

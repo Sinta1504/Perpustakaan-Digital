@@ -31,11 +31,24 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         @forelse($books as $book)
             <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 group">
+                
+                {{-- BAGIAN GAMBAR YANG SUDAH DIPERBAIKI --}}
                 <div class="relative aspect-[3/4] overflow-hidden bg-slate-200">
-                    <img src="{{ \Illuminate\Support\Str::startsWith($book->cover, 'http') ? $book->cover : asset('storage/' . $book->cover) }}" 
-                         alt="{{ $book->judul }}" 
-                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                         onerror="this.onerror=null;this.src='https://placehold.co/400x600?text=Gambar+Tidak+Ada';">
+                    @php
+                        // Cek apakah menggunakan cover_url atau cover biasa
+                        $urlGambar = $book->cover_url ?? $book->cover;
+                    @endphp
+
+                    @if($urlGambar)
+                        <img src="{{ \Illuminate\Support\Str::startsWith($urlGambar, 'http') ? $urlGambar : asset('storage/' . $urlGambar) }}" 
+                             alt="{{ $book->judul }}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                             onerror="this.onerror=null;this.src='https://placehold.co/400x600?text=Cek+Koneksi+Internet';">
+                    @else
+                        <div class="flex items-center justify-center h-full bg-slate-200">
+                             <span class="text-slate-400 italic text-xs font-bold uppercase tracking-widest text-center px-4">Gambar Tidak Ada</span>
+                        </div>
+                    @endif
                     
                     <div class="absolute top-4 left-4">
                         <span class="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-black text-blue-600 uppercase">
@@ -55,12 +68,12 @@
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        {{-- Tombol Pinjam: Bisa dilihat Sinta/User --}}
+                        {{-- Tombol Pinjam --}}
                         <a href="{{ route('loans.create', $book->id) }}" class="w-full text-center py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition">
                             Pinjam Buku
                         </a>
 
-                        {{-- Tombol Edit & Hapus: DISORENYIKAN DARI USER/SINTA --}}
+                        {{-- Tombol Edit & Hapus --}}
                         @if(auth()->check() && auth()->user()->role === 'admin')
                             <div class="flex gap-2 mt-2 pt-2 border-t border-slate-100">
                                 <a href="{{ route('books.edit', $book->id) }}" class="flex-grow text-center py-2 rounded-lg bg-amber-50 text-amber-600 font-bold text-xs hover:bg-amber-100 transition">

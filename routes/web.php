@@ -59,24 +59,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         /**
          * MANAJEMEN FEEDBACK (SUARA PEMINJAM)
-         * Sekarang menggunakan Controller agar data ulasan otomatis masuk
          */
         Route::get('/admin/feedback', [FeedbackController::class, 'index'])->name('admin.feedback.index');
-        
-        // Rute untuk memproses balasan Admin terhadap ulasan User
         Route::post('/admin/feedback/{id}/reply', [FeedbackController::class, 'reply'])->name('admin.feedback.reply');
-        
         Route::delete('/admin/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('admin.feedback.destroy');
 
         // Panel Manajemen Pinjaman Admin
         Route::get('/admin/semua-pinjaman', [LoanController::class, 'allLoans'])->name('admin.loans');
         Route::post('/admin/loans/return/{id}', [LoanController::class, 'returnBook'])->name('admin.loans.return');
 
-        // Inventori & Manajemen User
-        Route::get('/admin/inventori', [LoanController::class, 'inventory'])->name('admin.inventory');
+        /**
+         * INVENTORI & MANAJEMEN USER (PERBAIKAN DI SINI)
+         * Mengarah ke BookController sesuai fungsi inventory yang baru
+         */
+        Route::get('/admin/inventori', [BookController::class, 'inventory'])->name('admin.inventory');
+        
+        // Rute untuk nonaktifkan akun pasif
         Route::patch('/admin/user/{user}/toggle', [LoanController::class, 'toggleUserStatus'])->name('admin.user.toggle');
 
-        // CRUD Manajemen Buku
+        /**
+         * CRUD MANAJEMEN BUKU
+         */
         Route::get('/buku/tambah', [BookController::class, 'create'])->name('books.create');
         Route::post('/buku/tambah', [BookController::class, 'store'])->name('books.store');
         Route::get('/buku/{book}/edit', [BookController::class, 'edit'])->name('books.edit');
