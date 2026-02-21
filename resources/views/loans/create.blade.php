@@ -5,9 +5,11 @@
     <div class="max-w-5xl mx-auto bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden">
         <div class="flex flex-col lg:flex-row">
             
+            {{-- Bagian Kiri: Informasi Buku --}}
             <div class="lg:w-1/3 bg-slate-50 p-10 flex flex-col items-center text-center border-r border-slate-100">
                 <div class="relative mb-6">
-                    <img src="{{ $book->cover }}" alt="{{ $book->judul }}" class="w-48 h-64 object-cover rounded-3xl shadow-2xl">
+                    {{-- Menampilkan cover buku dari folder storage --}}
+                    <img src="{{ asset('storage/' . $book->cover) }}" alt="{{ $book->judul }}" class="w-48 h-64 object-cover rounded-3xl shadow-2xl">
                     <span class="absolute -top-3 -right-3 bg-blue-600 text-white text-[10px] font-black px-4 py-1 rounded-full shadow-lg uppercase tracking-tighter">
                         {{ $book->kategori }}
                     </span>
@@ -27,6 +29,7 @@
                 </div>
             </div>
 
+            {{-- Bagian Kanan: Form Konfirmasi --}}
             <div class="lg:w-2/3 p-10 md:p-14">
                 <div class="flex items-center gap-3 mb-6">
                     <span class="text-2xl">📖</span>
@@ -56,8 +59,14 @@
                     </div>
                 </div>
 
-                <form action="{{ route('loans.store', $book->id) }}" method="POST" class="space-y-6">
+                {{-- FORM START: Tanpa parameter ID di route --}}
+                <form action="{{ route('loans.store') }}" method="POST" class="space-y-6">
                     @csrf
+                    
+                    {{-- DATA TERSEMBUNYI: Penting agar Controller bisa memproses --}}
+                    <input type="hidden" name="book_id" value="{{ $book->id }}">
+                    <input type="hidden" name="tanggal_kembali" value="{{ $tanggalKembali }}">
+
                     <div>
                         <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-tighter">Nama Lengkap Peminjam</label>
                         <input type="text" name="peminjam_nama" value="{{ auth()->user()->name }}" readonly
@@ -74,6 +83,7 @@
                         ✅ Konfirmasi Peminjaman
                     </button>
                 </form>
+                {{-- FORM END --}}
             </div>
         </div>
     </div>

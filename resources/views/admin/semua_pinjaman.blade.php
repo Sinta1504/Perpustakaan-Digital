@@ -33,8 +33,17 @@
                 @foreach($loans as $loan)
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-8 py-6">
-                        <p class="font-bold text-slate-900">{{ $loan->book->judul }}</p>
-                        <p class="text-[10px] text-blue-600 font-bold italic">Akun: {{ $loan->user->name }}</p>
+                        <div class="flex items-center gap-4">
+                            {{-- LOGIKA GAMBAR BARU DI SINI --}}
+                            <img src="{{ $loan->book->cover_url ?? asset('storage/'.$loan->book->cover) }}" 
+                                 class="w-12 h-16 object-cover rounded-lg shadow-sm border border-slate-100"
+                                 onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
+                            
+                            <div>
+                                <p class="font-bold text-slate-900 leading-tight">{{ $loan->book->judul }}</p>
+                                <p class="text-[10px] text-blue-600 font-bold italic">Akun: {{ $loan->user->name }}</p>
+                            </div>
+                        </div>
                     </td>
                     <td class="px-8 py-6">
                         <p class="font-bold text-slate-800">{{ $loan->nama_peminjam }}</p>

@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,17 +12,34 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-{
-    // Mengisi data buku
-    $this->call([
-        BookSeeder::class,
-    ]);
+    {
+        // 1. Jalankan BookSeeder (Data Buku)
+        $this->call([
+            BookSeeder::class,
+        ]);
 
-    // Membuat akun admin otomatis
-    \App\Models\User::factory()->create([
-        'name' => 'Admin',
-        'email' => 'admin@test.com',
-        'password' => bcrypt('password'), // Passwordnya adalah: password
-    ]);
-}
+        // 2. Akun ADMIN
+        User::create([
+            'name'     => 'Administrator Perpustakaan',
+            'email'    => 'admin@test.com',
+            'password' => Hash::make('admin123'), // Passwordnya: admin123
+            'role'     => 'admin',
+        ]);
+
+        // 3. Akun USER (Sinta)
+        User::create([
+            'name'     => 'Sinta Pembaca',
+            'email'    => 'sinta@test.com',
+            'password' => Hash::make('user123'), // Passwordnya: user123
+            'role'     => 'user',
+        ]);
+
+        // 4. Akun USER (Zara)
+        User::create([
+            'name'     => 'Zara Penulis',
+            'email'    => 'zara@test.com',
+            'password' => Hash::make('user123'),
+            'role'     => 'user',
+        ]);
+    }
 }

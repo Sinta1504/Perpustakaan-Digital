@@ -2,122 +2,155 @@
 
 @section('content')
 <div class="container mx-auto px-6 py-12">
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-100 border border-green-200 text-green-700 rounded-2xl font-bold flex items-center gap-2 animate-fade-in">
-            ✅ {{ session('success') }}
+
+    {{-- Notifikasi Error & Sukses --}}
+    @if ($errors->any())
+        <div class="bg-red-500 text-white p-5 rounded-[2rem] mb-8 shadow-lg">
+            <div class="flex items-center mb-2">
+                <span class="text-xl mr-2">⚠️</span>
+                <p class="font-black uppercase tracking-widest text-xs">Ada Kesalahan:</p>
+            </div>
+            <ul class="list-disc list-inside text-sm font-medium opacity-90">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-3xl font-black text-slate-900">Daftar Pinjaman Saya</h2>
-            <p class="text-slate-500">Riwayat dan status buku yang sedang Anda pinjam.</p>
+    @if(session('success'))
+        <div class="bg-green-500 text-white p-5 rounded-[2rem] mb-8 shadow-lg flex items-center">
+            <span class="text-xl mr-3">✅</span>
+            <p class="font-black uppercase tracking-widest text-xs">{{ session('success') }}</p>
         </div>
-        <a href="{{ route('katalog') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2">
-            <span>+</span> Pinjam Buku Lagi
-        </a>
+    @endif
+
+    <div class="flex justify-between items-center mb-10">
+        <h2 class="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Pinjaman Saya 📖</h2>
+        <div class="bg-blue-600 text-white px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">
+            {{ $loans->count() }} Total Aktivitas
+        </div>
     </div>
 
-    <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
-        <table class="w-full text-left">
-            <thead>
-                <tr class="bg-slate-50 border-b border-slate-100">
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Buku</th>
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Peminjam</th>
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Tenggat</th>
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Denda</th>
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
-                    <th class="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50">
-                @foreach($loans as $loan)
-                @php
-                    $tenggat = \Carbon\Carbon::parse($loan->tanggal_kembali);
-                    $hariIni = \Carbon\Carbon::now()->startOfDay();
-                    $selisihHari = $hariIni->diffInDays($tenggat, false);
-                    $isWarning = $tenggat->isToday() || $tenggat->isPast();
+    <div class="grid grid-cols-1 gap-12">
+        @forelse($loans as $loan)
+        <div class="bg-white rounded-[3.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden transition-all hover:border-blue-200">
+            <div class="p-10">
+                <div class="flex flex-col lg:flex-row gap-12">
                     
-                    // Hitung Denda jika status masih dipinjam dan sudah lewat tenggat
-                    $denda = 0;
-                    if ($selisihHari < 0 && $loan->status == 'dipinjam') {
-                        $denda = abs($selisihHari) * 2000;
-                    }
-                @endphp
-                <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="px-8 py-6">
-                        <div class="flex items-center gap-4">
-                            <img src="{{ Str::startsWith($loan->book->cover, 'http') ? $loan->book->cover : asset('storage/' . $loan->book->cover) }}" class="w-14 h-20 object-cover rounded-xl shadow-md">
-                            <div>
-                                <p class="font-bold text-slate-900 leading-tight">{{ $loan->book->judul }}</p>
-                                <p class="text-[10px] text-blue-600 font-mono mt-1 font-bold uppercase tracking-tighter">
-                                    LIB-{{ str_pad($loan->book->id, 4, '0', STR_PAD_LEFT) }}
-                                </p>
+                    {{-- SISI KIRI: Visual Buku (Disamakan dengan Katalog) --}}
+                    <div class="lg:w-1/4">
+                        <div class="relative group">
+                            {{-- Logika Gambar: Cek URL luar dulu, lalu storage, lalu placeholder --}}
+                            <img src="{{ $loan->book->cover_url ?? ( $loan->book->cover ? asset('storage/'.$loan->book->cover) : 'https://placehold.co/400x600?text='.urlencode($loan->book->judul) ) }}" 
+                                 class="w-full aspect-[3/4] object-cover rounded-[2.5rem] shadow-2xl border-8 border-slate-50 transition-transform group-hover:scale-105"
+                                 alt="{{ $loan->book->judul }}">
+                            
+                            <div class="absolute -bottom-4 -right-4 bg-white p-3 rounded-2xl shadow-xl border border-slate-100">
+                                @if($loan->status == 'Sudah Dikembalikan' || $loan->status == 'kembali')
+                                    <span class="text-green-500 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        DIKEMBALIKAN
+                                    </span>
+                                @else
+                                    <span class="text-orange-500 text-[10px] font-black uppercase tracking-widest">
+                                        ● {{ $loan->status }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
-                    </td>
+                    </div>
 
-                    <td class="px-8 py-6">
-                        <p class="font-bold text-slate-800">{{ $loan->nama_peminjam }}</p>
-                        <p class="text-xs text-slate-400 font-medium">{{ $loan->nomor_identitas }}</p>
-                    </td>
+                    {{-- SISI KANAN: Detail --}}
+                    <div class="lg:w-3/4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="text-3xl font-black text-slate-900 leading-tight uppercase italic mb-1">{{ $loan->book->judul }}</h4>
+                                    <p class="text-sm text-blue-600 font-bold tracking-widest uppercase mb-6 italic">Karya: {{ $loan->book->penulis }}</p>
+                                </div>
+                                {{-- Ikon Centang Besar untuk status Kembali --}}
+                                @if($loan->status == 'Sudah Dikembalikan' || $loan->status == 'kembali')
+                                    <div class="bg-green-100 text-green-600 p-4 rounded-full shadow-inner">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                @endif
+                            </div>
 
-                    <td class="px-8 py-6 text-center">
-                        <p class="font-bold {{ $isWarning && $loan->status == 'dipinjam' ? 'text-red-500' : 'text-slate-700' }}">
-                            {{ $tenggat->format('d M Y') }}
-                        </p>
-                        @if($loan->status == 'dipinjam')
-                            @if($isWarning)
-                                <span class="text-[9px] font-black text-red-500 uppercase tracking-tighter block animate-bounce mt-1">⚠️ Segera Kembalikan!</span>
+                            {{-- Panel Info --}}
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p class="text-[9px] text-slate-400 font-black uppercase mb-1">Tenggat Kembali</p>
+                                    <p class="text-sm font-bold text-slate-700">{{ \Carbon\Carbon::parse($loan->tanggal_kembali)->format('d M Y') }}</p>
+                                </div>
+                                <div class="bg-red-50 p-5 rounded-3xl border border-red-100">
+                                    <p class="text-[9px] text-red-400 font-black uppercase mb-1">Denda Terakumulasi</p>
+                                    <p class="text-sm font-black text-red-600">Rp {{ number_format($loan->denda ?? 0, 0, ',', '.') }}</p>
+                                </div>
+                                <div class="bg-blue-50 p-5 rounded-3xl border border-blue-100">
+                                    <p class="text-[9px] text-blue-400 font-black uppercase mb-1">Status Pinjaman</p>
+                                    <p class="text-sm font-black text-blue-700 capitalize">{{ $loan->status }}</p>
+                                </div>
+                            </div>
+
+                            {{-- Kondisi Form: Muncul hanya jika status masih 'dipinjam' --}}
+                            @if($loan->status == 'dipinjam')
+                                <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
+                                    <h5 class="text-xs font-black uppercase tracking-[0.2em] mb-4 text-blue-400">Kembalikan Buku & Berikan Ulasan</h5>
+                                    
+                                    <form action="{{ route('pinjaman.kembalikan', $loan->id) }}" method="POST">
+                                        @csrf
+                                        <div class="flex flex-col md:flex-row gap-6">
+                                            <div class="md:w-1/4">
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Rating:</p>
+                                                <select name="rating" required class="w-full bg-slate-800 border-none rounded-xl text-amber-400 font-bold focus:ring-2 focus:ring-blue-500">
+                                                    <option value="5">★★★★★ (Hebat)</option>
+                                                    <option value="4">★★★★☆ (Bagus)</option>
+                                                    <option value="3">★★★☆☆ (Biasa)</option>
+                                                    <option value="2">★★☆☆☆ (Kurang)</option>
+                                                    <option value="1">★☆☆☆☆ (Buruk)</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="md:w-3/4">
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Pesan Ulasan:</p>
+                                                <textarea name="ulasan" rows="2" required 
+                                                    class="w-full bg-slate-800 border-none rounded-2xl p-4 text-sm text-slate-200 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="Tulis ulasan minimal 5 karakter..."></textarea>
+                                                
+                                                <button type="submit" class="mt-4 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                                                    KIRIM & SELESAI PENGEMBALIAN
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             @else
-                                <p class="text-[10px] font-black uppercase tracking-tighter text-slate-400 mt-1">{{ $selisihHari }} Hari Lagi</p>
+                                {{-- Tampilan jika sudah dikembalikan --}}
+                                <div class="bg-green-500/10 border border-green-500/20 rounded-[2.5rem] p-6">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl">🏆</span>
+                                        <div>
+                                            <p class="text-green-600 font-black text-[10px] uppercase tracking-widest">Selesai! Buku telah dikembalikan</p>
+                                            <p class="text-slate-500 text-xs italic mt-1">"{{ $loan->ulasan ?? 'Terima kasih telah membaca buku ini!' }}"</p>
+                                        </div>
+                                    </div>
+                                </div>
                             @endif
-                        @endif
-                    </td>
-
-                    <td class="px-8 py-6 text-center">
-                        @if($denda > 0)
-                            <div class="inline-block bg-red-50 border border-red-100 px-3 py-1 rounded-full">
-                                <p class="text-sm font-black text-red-600">Rp {{ number_format($denda, 0, ',', '.') }}</p>
-                            </div>
-                        @else
-                            <p class="text-sm font-bold text-slate-300">-</p>
-                        @endif
-                    </td>
-
-                    <td class="px-8 py-6 text-right">
-                        <span class="px-4 py-1.5 {{ $loan->status == 'dikembalikan' ? 'bg-green-100 text-green-600 border-green-200' : ($isWarning ? 'bg-red-100 text-red-600 border-red-200' : 'bg-blue-100 text-blue-600 border-blue-200') }} rounded-full text-[10px] font-black uppercase tracking-widest border">
-                            {{ $loan->status }}
-                        </span>
-                    </td>
-
-                    <td class="px-8 py-6 text-center">
-                        @if($loan->status == 'dipinjam')
-                        <form action="{{ route('loans.return', $loan->id) }}" method="POST" onsubmit="return confirm('Apakah buku ini sudah benar-benar dikembalikan?')">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-md active:scale-95">
-                                Kembalikan
-                            </button>
-                        </form>
-                        @else
-                        <div class="flex flex-col items-center">
-                            <span class="text-green-500 text-xl font-bold">✔</span>
-                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Selesai</span>
                         </div>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-        @if($loans->isEmpty())
-        <div class="py-20 text-center">
-            <span class="text-5xl block mb-4">📭</span>
-            <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">Belum ada riwayat peminjaman</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        @endif
+        @empty
+        <div class="text-center py-24 bg-white rounded-[4rem] border-4 border-dashed border-slate-100">
+            <p class="text-slate-400 font-black uppercase tracking-widest italic">Belum ada aktivitas pinjaman.</p>
+        </div>
+        @endforelse
     </div>
 </div>
 @endsection

@@ -9,38 +9,26 @@ class Feedback extends Model
 {
     use HasFactory;
 
-    /**
-     * Nama tabel yang digunakan di database.
-     */
-    protected $table = 'feedbacks';
+    // Nama tabel di database (pastikan sesuai migration Anda)
+    protected $table = 'feedbacks'; 
 
-    /**
-     * Kolom-kolom yang boleh diisi secara mass-assignment.
-     * Ditambahkan 'book_id' dan 'rating' sesuai perubahan migration terbaru.
-     */
+    // WAJIB ADA: Daftarkan kolom yang boleh diisi
     protected $fillable = [
-        'user_id', 
-        'book_id', 
-        'pesan', 
-        'kategori', 
-        'rating'
+        'user_id',
+        'book_id',
+        'pesan',      // Sesuaikan dengan migration (pesan)
+        'rating',
+        'kategori',
+        'admin_reply'
     ];
 
-    /**
-     * Relasi ke Model User.
-     * Menandakan bahwa setiap feedback dimiliki oleh satu User.
-     */
-    public function user()
-    {
+    // Relasi agar admin bisa melihat nama user
+    public function user() {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relasi ke Model Book.
-     * Menandakan bahwa feedback/rating ini merujuk pada buku tertentu.
-     */
-    public function book()
-    {
+    // Relasi agar admin bisa melihat judul buku
+    public function book() {
         return $this->belongsTo(Book::class);
     }
 }

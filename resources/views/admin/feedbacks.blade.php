@@ -1,97 +1,180 @@
 @extends('layouts.app_custom')
 
 @section('content')
-<div class="max-w-6xl mx-auto">
-    
-    {{-- Header Dinamis --}}
-    <div class="flex justify-between items-end mb-12 border-b border-slate-100 pb-8">
+<div class="container mx-auto px-6 py-12">
+    <div class="mb-10 flex justify-between items-end">
         <div>
-            <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tighter uppercase italic">Suara Peminjam</h1>
-            <p class="text-slate-500 text-sm font-medium">Respon ulasan pengguna untuk meningkatkan layanan E-LIB.</p>
+            <h2 class="text-3xl font-black text-slate-900 uppercase italic">Suara Peminjam</h2>
+            <p class="text-slate-500 font-medium">Kelola ulasan dan berikan balasan hangat kepada pembaca.</p>
         </div>
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-100">
-            💬 {{ $feedbacks->count() }} Total Ulasan
+        <div class="bg-slate-100 px-4 py-2 rounded-2xl border border-slate-200">
+            <span class="text-slate-600 font-bold text-sm">Total: {{ $reviews->count() }} Ulasan</span>
         </div>
     </div>
 
-    {{-- Looping Data dari Database --}}
-    <div class="space-y-8">
-        @forelse($feedbacks as $item)
-        <div class="bg-white rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden transition-all hover:border-blue-200">
-            <div class="p-10 flex flex-col md:flex-row gap-10">
-                
-                {{-- Info User Dinamis --}}
-                <div class="md:w-1/3">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-inner">
-                            {{ substr($item->user->name, 0, 2) }}
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-bold text-slate-900">{{ $item->user->name }}</h4>
-                            <p class="text-[10px] text-blue-600 uppercase font-black tracking-widest">Peminjam Buku</p>
-                        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        @forelse($reviews as $review)
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-green-500 text-white text-[8px] font-black px-4 py-1 uppercase tracking-widest rounded-bl-2xl">
+                Selesai
+            </div>
+
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs">
+                        {{ substr($review->user->name ?? 'U', 0, 1) }}
                     </div>
-                    <div class="flex gap-1 mb-2 text-amber-400 text-xs">
-                        @for($i=0; $i<$item->rating; $i++) ★ @endfor
+                    <div>
+                        <h5 class="font-black text-slate-900 uppercase text-xs italic">{{ $review->user->name ?? 'User' }}</h5>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Pembaca</p>
                     </div>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-tighter">
-                        {{ $item->created_at->format('d M Y') }}
-                    </p>
                 </div>
-
-                <div class="md:w-2/3 flex flex-col">
-                    {{-- INFO BUKU DAN PENULIS (DI PERBAIKI DI SINI) --}}
-                    <div class="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-sm">
-                        <img src="{{ $item->book->cover_url ?? asset('storage/'.$item->book->cover) }}" 
-                             class="w-12 h-16 object-cover rounded-xl shadow-md border-2 border-white"
-                             onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
-                        <div>
-                            <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Mengulas Buku:</p>
-                            <h4 class="font-bold text-slate-900 leading-tight">{{ $item->book->judul }}</h4>
-                            <p class="text-xs text-slate-500 font-medium italic">Karya: {{ $item->book->penulis }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Pesan dari User --}}
-                    <div class="bg-white p-6 rounded-[2rem] mb-6 border border-blue-50 italic text-slate-600 text-sm leading-relaxed shadow-sm relative">
-                        <span class="absolute -top-3 left-6 bg-white px-2 text-blue-300 text-2xl font-serif">“</span>
-                        {{ $item->pesan }}
-                        <span class="absolute -bottom-6 right-6 text-blue-300 text-2xl font-serif">”</span>
-                    </div>
-
-                    {{-- Logika Tampilan Balasan --}}
-                    @if($item->admin_reply)
-                        {{-- Jika Sudah Ada Balasan --}}
-                        <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-2xl relative border-l-8 border-blue-600">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em]">Respon Admin:</span>
-                            </div>
-                            <p class="text-sm font-medium leading-relaxed italic text-slate-300">
-                                "{{ $item->admin_reply }}"
-                            </p>
-                        </div>
-                    @else
-                        {{-- Jika Belum Ada Balasan (Form Input) --}}
-                        <form action="{{ route('admin.feedback.reply', $item->id) }}" method="POST" class="relative">
-                            @csrf
-                            <textarea name="reply" rows="2" required
-                                class="w-full bg-blue-50/50 border-2 border-blue-100 rounded-[2rem] p-6 text-sm text-slate-700 focus:outline-none focus:border-blue-400 transition-all placeholder:text-blue-300 font-medium"
-                                placeholder="Tulis balasan untuk {{ $item->user->name }}..."></textarea>
-                            
-                            <button type="submit" class="absolute right-4 bottom-4 bg-blue-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg">
-                                Balas Sekarang
-                            </button>
-                        </form>
-                    @endif
+                <div class="bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                    <span class="text-amber-500 font-black text-[10px]">⭐ {{ $review->rating }}/5</span>
                 </div>
+            </div>
+
+            <div class="bg-slate-50 p-5 rounded-[1.5rem] mb-4 italic text-slate-600 text-sm leading-relaxed min-h-[80px]">
+                "{{ $review->ulasan ?? '-' }}"
+            </div>
+
+            @if($review->admin_reply)
+            <div class="bg-blue-50 p-4 rounded-2xl mb-4 border-l-4 border-blue-500">
+                <p class="text-[10px] font-black text-blue-600 uppercase mb-1 flex items-center gap-1">
+                    <span class="text-xs">💬</span> Balasan Admin:
+                </p>
+                <p class="text-xs text-slate-600 italic leading-relaxed">"{{ $review->admin_reply }}"</p>
+            </div>
+            @endif
+
+            <div class="flex items-center justify-between border-t border-slate-50 pt-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-8 bg-slate-100 rounded shadow-sm overflow-hidden">
+                        <img src="{{ $review->book->cover_url ?? asset('storage/'.$review->book->cover) }}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150'">
+                    </div>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter truncate w-32">
+                        {{ $review->book->judul }}
+                    </span>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold uppercase">{{ $review->updated_at->diffForHumans() }}</span>
             </div>
         </div>
         @empty
-        {{-- Tampilan jika belum ada ulasan sama sekali --}}
-        <div class="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-            <p class="text-slate-400 font-bold uppercase tracking-widest italic">Belum ada suara peminjam yang masuk</p>
+        <div class="col-span-full py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+            <div class="text-5xl mb-4">💬</div>
+            <h3 class="font-black text-slate-900 uppercase italic">Belum Ada Ulasan</h3>
+            <p class="text-slate-400 text-sm">Review akan muncul di sini otomatis setelah pembaca mengembalikan buku.</p>
         </div>
         @endforelse
     </div>
+
+    @if($reviews->isNotEmpty())
+    <div class="bg-slate-800 rounded-[2.5rem] p-8 shadow-xl overflow-hidden border border-slate-700">
+        <h3 class="text-xl font-black text-white uppercase italic mb-6">Manajemen Ulasan & Balasan</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-white border-separate border-spacing-y-2">
+                <thead>
+                    <tr class="text-slate-400 text-[10px] uppercase tracking-widest font-black">
+                        <th class="px-4 py-3 text-left">Peminjam</th>
+                        <th class="px-4 py-3 text-left">Buku</th>
+                        <th class="px-4 py-3 text-left">Rating</th>
+                        <th class="px-4 py-3 text-left">Ulasan</th>
+                        <th class="px-4 py-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($reviews as $item)
+                    <tr class="bg-slate-700/30 hover:bg-slate-700/50 transition-all group">
+                        <td class="p-4 text-sm font-bold rounded-l-2xl">{{ $item->user->name }}</td>
+                        <td class="p-4 text-sm text-slate-400">{{ $item->book->judul }}</td>
+                        <td class="p-4 text-yellow-400 font-bold">
+                            @for($i = 0; $i < $item->rating; $i++) ⭐ @endfor
+                        </td>
+                        <td class="p-4 text-sm text-slate-300 italic">
+                            {{ Str::limit($item->ulasan, 40) }}
+                            @if($item->admin_reply) 
+                                <span class="ml-2 bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter">Terbalas</span> 
+                            @endif
+                        </td>
+                        <td class="p-4 text-right rounded-r-2xl">
+                            <div class="flex justify-end gap-3">
+                                <button onclick="openReplyModal({{ $item->id }}, '{{ addslashes($item->ulasan) }}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-tighter transition-all">
+                                    Balas
+                                </button>
+                                
+                                <form action="{{ route('admin.feedback.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Hapus ulasan ini?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-tighter transition-all">
+                                        Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 </div>
+
+<div id="replyModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl scale-95 transition-transform duration-300">
+        <h3 class="text-xl font-black text-slate-900 uppercase italic mb-2">Balas Ulasan</h3>
+        <p id="userReviewText" class="text-sm text-slate-500 italic mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100"></p>
+        
+        <form id="replyForm" method="POST">
+            @csrf
+            <textarea name="reply" rows="4" class="w-full rounded-2xl border-slate-200 focus:ring-blue-500 focus:border-blue-500 mb-4 text-sm p-4 text-slate-700" placeholder="Tulis balasan hangat Anda untuk pembaca..." required></textarea>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeReplyModal()" class="flex-1 py-3 text-sm font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-all">
+                    Batal
+                </button>
+                <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                    Kirim Balasan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    /**
+     * Membuka modal balasan dan mengisi konten ulasan asli secara dinamis
+     */
+    function openReplyModal(id, text) {
+        document.getElementById('userReviewText').innerText = '"' + text + '"';
+        // Mengarahkan form action ke route reply di FeedbackController
+        document.getElementById('replyForm').action = "/admin/feedback/" + id + "/reply";
+        
+        const modal = document.getElementById('replyModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.querySelector('div').classList.add('scale-100');
+        }, 10);
+    }
+    
+    /**
+     * Menutup modal balasan
+     */
+    function closeReplyModal() {
+        const modal = document.getElementById('replyModal');
+        modal.querySelector('div').classList.remove('scale-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    /**
+     * Menutup modal jika user mengklik area di luar kotak modal
+     */
+    window.onclick = function(event) {
+        const modal = document.getElementById('replyModal');
+        if (event.target == modal) {
+            closeReplyModal();
+        }
+    }
+</script>
 @endsection

@@ -9,20 +9,30 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-{
-    Schema::create('loans', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->foreignId('book_id')->constrained()->onDelete('cascade');
-        $table->string('nama_peminjam');
-        $table->string('nomor_identitas'); 
-        $table->date('tanggal_pinjam');
-        $table->date('tanggal_kembali');
-        $table->enum('status', ['dipinjam', 'dikembalikan'])->default('dipinjam');
-        $table->timestamps();
-    });
-}
+    public function up()
+    {
+        Schema::create('loans', function (Blueprint $table) {
+            $table->id();
+            
+            // Relasi ke tabel users (Menyelesaikan error "Unknown column user_id")
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            
+            // Relasi ke tabel books
+            $table->foreignId('book_id')->constrained()->onDelete('cascade');
+            
+            $table->date('tanggal_pinjam');
+            $table->date('tanggal_kembali')->nullable();
+            
+            // Status peminjaman
+            $table->enum('status', ['dipinjam', 'kembali', 'terlambat'])->default('dipinjam');
+            
+            // Kolom untuk fitur ulasan dan rating (Suara Peminjam)
+            $table->text('ulasan')->nullable();
+            $table->integer('rating')->nullable();
+            
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

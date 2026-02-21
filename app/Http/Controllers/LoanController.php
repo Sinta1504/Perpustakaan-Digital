@@ -4,140 +4,122 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Loan;
-use App\Models\User;
+use App\Models\Feedback;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class LoanController extends Controller
 {
     /**
-     * Tampilan Dashboard Utama
+     * DASHBOARD: Halaman utama setelah login
+     * Menampilkan HANYA rekomendasi buku
      */
     public function dashboard()
     {
-        $userId = Auth::id();
-        $overdueBooks = Loan::with('book')
-            ->where('user_id', $userId)
-            ->where('status', 'dipinjam')
-            ->whereDate('tanggal_kembali', '<=', now())
-            ->get();
+        // Mengambil 4 buku terbaru untuk ditampilkan di grid rekomendasi
+        $recommendedBooks = Book::latest()->take(4)->get();
 
-        $topBorrowers = User::withCount('loans')->orderBy('loans_count', 'desc')->take(5)->get();
-        $totalBuku = Book::count();
-        $totalPinjaman = Loan::count();
-
-        return view('dashboard', compact('topBorrowers', 'totalBuku', 'totalPinjaman', 'overdueBooks'));
+        // Mengirim ke view 'dashboard' (Bukan loans.index agar tidak campur)
+        return view('dashboard', compact('recommendedBooks'));
     }
 
     /**
-     * Daftar Pinjaman: User melihat MILIKNYA sendiri
+     * DAFTAR PINJAMAN USER: Halaman "Pinjaman Saya"
      */
     public function index()
     {
-        $loans = Loan::with(['user', 'book'])
+        // Mengambil daftar pinjaman milik user yang sedang login
+        $loans = Loan::with(['book'])
                     ->where('user_id', Auth::id())
                     ->latest()
                     ->get();
 
-        return view('loans.index', compact('loans'));
+        return view('pinjaman', compact('loans'));
     }
 
     /**
-     * FUNGSI ADMIN: Admin melihat SEMUA pinjaman
+     * PANEL ADMIN: Monitoring Semua Pinjaman (Admin Only)
      */
     public function allLoans()
     {
         $loans = Loan::with(['user', 'book'])->latest()->get();
-        return view('loans.index', compact('loans'));
+        
+        return view('admin.loans', compact('loans'));
     }
 
     /**
-     * Menampilkan Form Konfirmasi Peminjaman
+     * FORM PINJAM: Menampilkan detail sebelum konfirmasi
      */
-    public function create(Book $book)
+    public function create($id)
     {
-        $tanggalPinjam = now()->format('d F Y');
-        $tanggalKembali = now()->addDays(7)->format('d F Y');
-
+        $book = Book::findOrFail($id);
+        $tanggalPinjam = Carbon::now();
+        $tanggalKembali = Carbon::now()->addDays(7); 
+        
         return view('loans.create', compact('book', 'tanggalPinjam', 'tanggalKembali'));
     }
 
     /**
-     * Memproses Penyimpanan Data Pinjam
+     * PROSES SIMPAN PINJAMAN
      */
-    public function store(Request $request, Book $book)
+    public function store(Request $request)
     {
         $request->validate([
-            'identitas' => 'required|string|max:50',
+            'book_id' => 'required|exists:books,id',
+            'tanggal_kembali' => 'required|date',
         ]);
-
-        if ($book->stok <= 0) {
-            return redirect()->route('katalog')->with('error', 'Maaf, stok buku ini sudah habis.');
-        }
 
         Loan::create([
-            'user_id' => Auth::id(),
-            'book_id' => $book->id,
-            'nama_peminjam' => Auth::user()->name,
-            'nomor_identitas' => $request->identitas,
-            'tanggal_pinjam' => Carbon::now(),
-            'tanggal_kembali' => Carbon::now()->addDays(7),
-            'status' => 'dipinjam',
+            'user_id'         => Auth::id(),
+            'book_id'         => $request->book_id,
+            'tanggal_pinjam'  => now(),
+            'tanggal_kembali' => $request->tanggal_kembali,
+            'status'          => 'dipinjam',
         ]);
 
-        // Kurangi stok menggunakan kolom 'stok' sesuai database Anda
-        $book->decrement('stok');
-
-        return redirect()->route('pinjaman')->with('success', 'Buku berhasil dipinjam!');
+        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Selamat membaca.");
     }
 
     /**
-     * FUNGSI PENGEMBALIAN BUKU (DIPERBAIKI)
-     * Digunakan oleh Admin (Selesaikan) dan User (Kembalikan)
+     * KEMBALIKAN BUKU & SIMPAN REVIEW
      */
-        public function returnBook($id)
+    public function returnBook(Request $request, $id)
     {
-        $loan = Loan::findOrFail($id);
-        
-        if (auth()->user()->id !== $loan->user_id && auth()->user()->role !== 'admin') {
-            return back()->with('error', 'Akses ditolak.');
-        }
-
-        // PERBAIKAN: Gunakan 'dikembalikan' jika 'kembali' menyebabkan truncation error
-        $loan->update([
-            'status' => 'dikembalikan', 
-            'tanggal_kembali' => now()
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'ulasan' => 'required|string|min:5',
         ]);
 
-        if ($loan->book) {
-            $loan->book->increment('stok');
-        }
+        $loan = Loan::findOrFail($id);
 
-        return back()->with('success', 'Buku berhasil dikembalikan!');
-    }
-    /*
-    |--------------------------------------------------------------------------
-    | FUNGSI KHUSUS ADMIN LAINNYA
-    |--------------------------------------------------------------------------
-    */
+        // 1. Update data di tabel Loans
+        $loan->update([
+            'status' => 'kembali', 
+            'tanggal_kembali' => now(),
+            'ulasan' => $request->ulasan, 
+            'rating' => $request->rating,
+        ]);
 
-    public function inventory()
-    {
-        $frequentBooks = Book::withCount('loans')->orderBy('loans_count', 'desc')->take(5)->get();
-        $damagedBooks = Book::where('kondisi', 'rusak')->get();
-        $unreturnedBooks = Loan::with(['book', 'user'])->where('status', 'dipinjam')->whereDate('tanggal_kembali', '<', now())->get();
+        // 2. Masukkan ke tabel Feedbacks (untuk fitur Suara Peminjam)
+        Feedback::create([
+            'user_id'  => Auth::id(),
+            'book_id'  => $loan->book_id,
+            'rating'   => $request->rating,
+            'pesan'    => $request->ulasan,
+            'kategori' => 'Peminjaman',
+        ]);
 
-        $inactiveUsers = User::whereDoesntHave('loans', function($query) {
-            $query->where('tanggal_pinjam', '>=', now()->subMonths(5));
-        })->where('role', '!=', 'admin')->get();
-
-        return view('admin.inventory', compact('frequentBooks', 'damagedBooks', 'unreturnedBooks', 'inactiveUsers'));
+        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan. Terima kasih atas ulasannya!');
     }
 
-    public function toggleUserStatus(User $user)
+    /**
+     * ADMIN: Suara Peminjam
+     */
+    public function suaraPeminjam()
     {
-        $user->update(['is_active' => !$user->is_active]);
-        return back()->with('success', 'Status akun berhasil diperbarui!');
+        $reviews = Feedback::with(['user', 'book'])->latest()->get();
+
+        return view('admin.feedbacks', compact('reviews'));
     }
 }
