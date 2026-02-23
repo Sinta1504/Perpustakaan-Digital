@@ -12,56 +12,50 @@ use Carbon\Carbon;
 class LoanController extends Controller
 {
     /**
-     * DASHBOARD: Halaman utama setelah login
-     * Menampilkan HANYA rekomendasi buku
+     * DASHBOARD: Menampilkan rekomendasi buku di halaman utama setelah login
      */
     public function dashboard()
     {
-        // Mengambil 4 buku terbaru untuk ditampilkan di grid rekomendasi
         $recommendedBooks = Book::latest()->take(4)->get();
-
-        // Mengirim ke view 'dashboard' (Bukan loans.index agar tidak campur)
         return view('dashboard', compact('recommendedBooks'));
     }
 
     /**
-     * DAFTAR PINJAMAN USER: Halaman "Pinjaman Saya"
+     * PINJAMAN SAYA: Halaman daftar buku yang sedang/pernah dipinjam oleh user
      */
     public function index()
     {
-        // Mengambil daftar pinjaman milik user yang sedang login
         $loans = Loan::with(['book'])
                     ->where('user_id', Auth::id())
                     ->latest()
                     ->get();
 
-        return view('pinjaman', compact('loans'));
+        // Pastikan folder views/loans/index.blade.php tersedia
+        return view('loans.index', compact('loans'));
     }
 
     /**
-     * PANEL ADMIN: Monitoring Semua Pinjaman (Admin Only)
+     * MONITORING ADMIN: Melihat semua data peminjaman dari semua user
      */
     public function allLoans()
     {
         $loans = Loan::with(['user', 'book'])->latest()->get();
-        
         return view('admin.loans', compact('loans'));
     }
 
     /**
-     * FORM PINJAM: Menampilkan detail sebelum konfirmasi
+     * FORM PINJAM: Menampilkan halaman konfirmasi pinjam buku
      */
     public function create($id)
     {
         $book = Book::findOrFail($id);
         $tanggalPinjam = Carbon::now();
         $tanggalKembali = Carbon::now()->addDays(7); 
-        
         return view('loans.create', compact('book', 'tanggalPinjam', 'tanggalKembali'));
     }
 
     /**
-     * PROSES SIMPAN PINJAMAN
+     * PROSES SIMPAN PINJAMAN: Menyimpan data pinjaman baru ke database
      */
     public function store(Request $request)
     {
@@ -78,14 +72,16 @@ class LoanController extends Controller
             'status'          => 'dipinjam',
         ]);
 
-        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Selamat membaca.");
+        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam!");
     }
 
     /**
-     * KEMBALIKAN BUKU & SIMPAN REVIEW
+     * PROSES KEMBALIKAN & OTOMATIS KE SUARA PEMINJAM (FEEDBACK)
+     * Ini akan mengupdate status di tabel Loans DAN membuat data baru di tabel Feedbacks
      */
     public function returnBook(Request $request, $id)
     {
+        // Validasi input rating dan ulasan
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'ulasan' => 'required|string|min:5',
@@ -93,7 +89,7 @@ class LoanController extends Controller
 
         $loan = Loan::findOrFail($id);
 
-        // 1. Update data di tabel Loans
+        // 1. Update status peminjaman menjadi 'kembali' di tabel Loans
         $loan->update([
             'status' => 'kembali', 
             'tanggal_kembali' => now(),
@@ -101,7 +97,7 @@ class LoanController extends Controller
             'rating' => $request->rating,
         ]);
 
-        // 2. Masukkan ke tabel Feedbacks (untuk fitur Suara Peminjam)
+        // 2. Simpan ulasan ke tabel Feedbacks secara otomatis
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
@@ -110,16 +106,6 @@ class LoanController extends Controller
             'kategori' => 'Peminjaman',
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan. Terima kasih atas ulasannya!');
-    }
-
-    /**
-     * ADMIN: Suara Peminjam
-     */
-    public function suaraPeminjam()
-    {
-        $reviews = Feedback::with(['user', 'book'])->latest()->get();
-
-        return view('admin.feedbacks', compact('reviews'));
+        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan dan ulasan terkirim ke Suara Peminjam!');
     }
 }

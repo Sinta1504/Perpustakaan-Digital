@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
 
         // 3. Akun USER (Sinta)
         User::create([
-            'name'     => 'Sinta Pembaca',
+            'name'     => 'Sinta',
             'email'    => 'sinta@test.com',
             'password' => Hash::make('user123'), // Passwordnya: user123
             'role'     => 'user',

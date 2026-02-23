@@ -84,7 +84,6 @@
                         
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
-                                {{-- KONTTAINER GAMBAR BUKU (16x20) --}}
                                 <div class="w-16 h-20 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden shadow-sm border border-slate-200">
                                     @php
                                         $coverPath = $loan->book->cover ?? '';
@@ -94,7 +93,6 @@
                                     @endphp
 
                                     @if($coverPath)
-                                        {{-- Inilah kode gambar yang sudah diperbaiki --}}
                                         <img src="{{ $urlGambar }}" 
                                              alt="{{ $loan->book->judul ?? 'Buku' }}" 
                                              class="w-full h-full object-cover"
@@ -106,7 +104,6 @@
                                     @endif
                                 </div>
 
-                                {{-- Info Judul & Penulis --}}
                                 <div>
                                     <h5 class="font-black text-slate-900 uppercase italic text-sm leading-tight">
                                         {{ $loan->book->judul ?? 'Buku Dihapus' }}
@@ -165,9 +162,10 @@
 {{-- MODAL --}}
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl">
+        {{-- BAGIAN PENTING: ACTION FORM DIKOSONGKAN KARENA AKAN DIISI OLEH JS --}}
         <form id="returnForm" method="POST">
             @csrf
-            @method('PATCH')
+            {{-- PERUBAHAN: Gunakan rute pinjaman.kembalikan yang ada di web.php --}}
             <div class="p-8">
                 <div class="text-center mb-6">
                     <h3 class="text-xl font-black text-slate-900 uppercase italic" id="modalBookTitle">Kembalikan Buku</h3>
@@ -200,7 +198,10 @@
 
 <script>
     function openReturnModal(id, title) {
-        document.getElementById('returnForm').action = `/loans/${id}/return`; 
+        // PERBAIKAN: Arahkan action form ke rute pinjaman.kembalikan
+        // Karena di web.php rutenya adalah /pinjaman/kembalikan/{id}
+        document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
+        
         document.getElementById('modalBookTitle').innerText = title;
         document.getElementById('returnModal').classList.remove('hidden');
     }
@@ -209,6 +210,7 @@
         document.getElementById('returnModal').classList.add('hidden');
     }
 
+    // Menutup modal jika klik di luar box
     window.onclick = function(event) {
         let modal = document.getElementById('returnModal');
         if (event.target == modal) {
