@@ -9,7 +9,6 @@
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
-                    
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
@@ -40,9 +39,12 @@
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
-                    <template #trigger>
+                    <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div class="font-bold">{{ Auth::user()->name }} <span class="text-xs text-blue-500">({{ strtoupper(Auth::user()->role) }})</span></div>
+                            <div class="font-bold">
+                                {{ Auth::user()->name }} 
+                                <span class="text-xs text-blue-500">({{ strtoupper(Auth::user()->role) }})</span>
+                            </div>
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -50,9 +52,9 @@
                                 </svg>
                             </div>
                         </button>
-                    </template>
+                    </x-slot>
 
-                    <template #content>
+                    <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
@@ -65,7 +67,7 @@
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
-                    </template>
+                    </x-slot>
                 </x-dropdown>
             </div>
 
@@ -87,11 +89,34 @@
             </x-responsive-nav-link>
             
             @if(Auth::user()->role === 'admin')
-                <x-responsive-nav-link :href="route('admin.loans')">📋 Monitoring Pinjaman</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.users.index')">👤 Layanan Pengguna</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.loans')" :active="request()->routeIs('admin.loans')">📋 Monitoring Pinjaman</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">👤 Layanan Pengguna</x-responsive-nav-link>
             @else
-                <x-responsive-nav-link :href="route('pinjaman')">📖 Pinjaman Saya</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('pinjaman')" :active="request()->routeIs('pinjaman')">📖 Pinjaman Saya</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('katalog')" :active="request()->routeIs('katalog')">📚 Katalog Buku</x-responsive-nav-link>
             @endif
+        </div>
+
+        <div class="pt-4 pb-1 border-t border-gray-200">
+            <div class="px-4">
+                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+            </div>
+
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link :href="route('profile.edit')">
+                    {{ __('Profile') }}
+                </x-responsive-nav-link>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <x-responsive-nav-link :href="route('logout')"
+                            onclick="event.preventDefault();
+                                        this.closest('form').submit();">
+                        {{ __('Log Out') }}
+                    </x-responsive-nav-link>
+                </form>
+            </div>
         </div>
     </div>
 </nav>

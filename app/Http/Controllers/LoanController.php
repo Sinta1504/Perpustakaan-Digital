@@ -12,7 +12,7 @@ use Carbon\Carbon;
 class LoanController extends Controller
 {
     /**
-     * DASHBOARD: Menampilkan rekomendasi buku di halaman utama setelah login
+     * DASHBOARD: Menampilkan rekomendasi buku
      */
     public function dashboard()
     {
@@ -21,7 +21,7 @@ class LoanController extends Controller
     }
 
     /**
-     * PINJAMAN SAYA: Halaman daftar buku yang sedang/pernah dipinjam oleh user
+     * PINJAMAN SAYA (USER)
      */
     public function index()
     {
@@ -30,21 +30,29 @@ class LoanController extends Controller
                     ->latest()
                     ->get();
 
-        // Pastikan folder views/loans/index.blade.php tersedia
         return view('loans.index', compact('loans'));
     }
 
     /**
-     * MONITORING ADMIN: Melihat semua data peminjaman dari semua user
+     * MONITORING ADMIN (DENGAN FILTER)
+     * TARUH KODE PERBAIKAN DI SINI
      */
-    public function allLoans()
-    {
-        $loans = Loan::with(['user', 'book'])->latest()->get();
-        return view('admin.loans', compact('loans'));
+    public function allLoans(Request $request)
+{
+    $query = Loan::with(['user', 'book']);
+
+    if ($request->has('status') && $request->status != '') {
+        $query->where('status', $request->status);
     }
 
+    $loans = $query->latest()->get();
+
+    // Pastikan nama variabel 'loans' sesuai dengan yang dipanggil di Blade
+    return view('admin.loans', compact('loans'));
+}
+
     /**
-     * FORM PINJAM: Menampilkan halaman konfirmasi pinjam buku
+     * FORM PINJAM
      */
     public function create($id)
     {
@@ -55,7 +63,7 @@ class LoanController extends Controller
     }
 
     /**
-     * PROSES SIMPAN PINJAMAN: Menyimpan data pinjaman baru ke database
+     * PROSES SIMPAN PINJAMAN
      */
     public function store(Request $request)
     {
@@ -76,12 +84,10 @@ class LoanController extends Controller
     }
 
     /**
-     * PROSES KEMBALIKAN & OTOMATIS KE SUARA PEMINJAM (FEEDBACK)
-     * Ini akan mengupdate status di tabel Loans DAN membuat data baru di tabel Feedbacks
+     * PROSES KEMBALIKAN & OTOMATIS KE FEEDBACK
      */
     public function returnBook(Request $request, $id)
     {
-        // Validasi input rating dan ulasan
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'ulasan' => 'required|string|min:5',
@@ -89,7 +95,6 @@ class LoanController extends Controller
 
         $loan = Loan::findOrFail($id);
 
-        // 1. Update status peminjaman menjadi 'kembali' di tabel Loans
         $loan->update([
             'status' => 'kembali', 
             'tanggal_kembali' => now(),
@@ -97,7 +102,6 @@ class LoanController extends Controller
             'rating' => $request->rating,
         ]);
 
-        // 2. Simpan ulasan ke tabel Feedbacks secara otomatis
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
@@ -106,6 +110,6 @@ class LoanController extends Controller
             'kategori' => 'Peminjaman',
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan dan ulasan terkirim ke Suara Peminjam!');
+        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan!');
     }
 }
