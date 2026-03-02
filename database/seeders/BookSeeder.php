@@ -7,51 +7,41 @@ use Illuminate\Database\Seeder;
 
 class BookSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $newBooks = [
+        $books = [
             [
                 'judul' => 'Harry Potter and the Philosopher\'s Stone',
                 'penulis' => 'J.K. Rowling',
-                'kategori' => 'Fantasy', // Kolom ini wajib ada!
+                'kategori' => 'Fantasy',
                 'stok' => 15,
-                'cover_url' => 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=1000&auto=format&fit=crop',
-                'deskripsi' => 'Kisah seorang anak laki-laki penyihir.'
+                'cover' => 'covers/hp1.jpg'
             ],
             [
                 'judul' => 'Start With Why',
                 'penulis' => 'Simon Sinek',
                 'kategori' => 'Business',
                 'stok' => 8,
-                'cover_url' => 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=1000&auto=format&fit=crop',
-                'deskripsi' => 'Menjelajahi inspirasi dalam kepemimpinan.'
+                'cover' => 'covers/start_with_why.jpg'
             ],
             [
                 'judul' => 'The Alchemist',
                 'penulis' => 'Paulo Coelho',
                 'kategori' => 'Adventure',
                 'stok' => 12,
-                'cover_url' => 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=1000&auto=format&fit=crop',
-                'deskripsi' => 'Perjalanan mengejar mimpi.'
+                'cover' => 'covers/alchemist.jpg'
             ],
             [
                 'judul' => 'Thinking, Fast and Slow',
                 'penulis' => 'Daniel Kahneman',
                 'kategori' => 'Psychology',
                 'stok' => 6,
-                'cover_url' => 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1000&auto=format&fit=crop',
-                'deskripsi' => 'Dua sistem yang menggerakkan cara kita berpikir.'
+                'cover' => 'covers/thinking.jpg'
             ],
         ];
 
-        foreach ($newBooks as $book) {
-            Book::updateOrCreate(
-                ['judul' => $book['judul']],
-                $book
-            );
+        foreach ($books as $book) {
+            Book::create($book);
         }
     }
 }

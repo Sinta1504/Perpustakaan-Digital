@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
-use App\Models\User; // Tambahkan ini
-use App\Models\Loan; // Tambahkan ini
+use App\Models\User;
+use App\Models\Loan;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class BookController extends Controller
 {
@@ -14,28 +15,42 @@ class BookController extends Controller
      */
     public function inventory()
     {
-        // 1. Buku paling sering dipinjam (Top 5)
-        $topBooks = Book::withCount('loans')->orderBy('loans_count', 'desc')->take(5)->get();
+        // 1. Buku paling sering dipinjam (Top 5) berdasarkan relasi loans
+        $topBooks = Book::withCount('loans')
+            ->orderBy('loans_count', 'desc')
+            ->take(5)
+            ->get();
 
-        // 2. Akun yang tidak pinjam > 5 bulan (Status Nonaktif)
-        $inactiveUsers = User::whereDoesntHave('loans', function($query) {
-            $query->where('created_at', '>=', now()->subMonths(5));
-        })->where('role', 'user')->get();
+        // 2. Akun yang tidak pinjam > 5 bulan (Status Pasif)
+        $fiveMonthsAgo = Carbon::now()->subMonths(5);
+        $inactiveUsers = User::where('role', 'user')
+            ->whereDoesntHave('loans', function($query) use ($fiveMonthsAgo) {
+                $query->where('created_at', '>=', $fiveMonthsAgo);
+            })->get();
 
-        // 3. Status Buku (Rusak/Lengkap)
+        // 3. Status Buku Rusak
         $brokenBooksCount = Book::where('status', 'rusak')->count();
         
-        // 4. Buku yang sedang dipinjam & belum kembali
-        $activeLoans = Loan::where('status', 'dipinjam')->with(['user', 'book'])->get();
+        // 4. Peminjaman Aktif
+        $activeLoans = Loan::where('status', 'dipinjam')
+            ->with(['user', 'book'])
+            ->latest()
+            ->get();
 
-        // Ambil semua buku untuk daftar tabel inventori
+        // 5. Ambil SEMUA buku untuk inventori
         $books = Book::latest()->get(); 
 
-        return view('admin.inventory', compact('topBooks', 'inactiveUsers', 'brokenBooksCount', 'activeLoans', 'books'));
+        return view('admin.inventory', compact(
+            'topBooks', 
+            'inactiveUsers', 
+            'brokenBooksCount', 
+            'activeLoans', 
+            'books'
+        ));
     }
 
     /**
-     * Menampilkan Halaman Beranda (Welcome)
+     * Menampilkan 4 buku terbaru di Landing Page
      */
     public function home()
     {
@@ -44,12 +59,13 @@ class BookController extends Controller
     }
 
     /**
-     * Menampilkan Halaman Katalog Lengkap
+     * Menampilkan Halaman KATALOG (Menampilkan SEMUA buku)
      */
     public function index(Request $request)
     {
         $query = Book::query();
 
+        // Fitur Pencarian
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->search . '%')
@@ -58,30 +74,33 @@ class BookController extends Controller
             });
         }
 
-        $books = $query->latest()->get();
-        return view('katalog', compact('books'));
+        // Mengambil semua hasil tanpa batasan agar semua buku muncul
+        $books = $query->latest()->get(); 
+
+        return view('books.index', compact('books'));
     }
 
-    /**
-     * Menampilkan Form Tambah Buku
-     */
     public function create()
     {
         return view('books.create');
     }
 
     /**
-     * Menyimpan Buku Baru dengan Gambar Otomatis
+     * Fitur Simpan Buku (Sudah Disinkronkan menggunakan kolom 'cover')
      */
     public function store(Request $request) 
     {
+        $request->validate([
+            'judul' => 'required',
+            'penulis' => 'required',
+            'kategori' => 'required',
+            'stok' => 'required|integer|min:0',
+        ]);
+
         $judul = $request->judul;
-        
-        // --- LOGIKA AMBIL GAMBAR OTOMATIS ---
         $query = urlencode($judul);
         $apiUrl = "https://www.googleapis.com/books/v1/volumes?q=" . $query . "&maxResults=1";
         
-        // Gunakan @ untuk menghindari warning jika koneksi gagal
         $response = @file_get_contents($apiUrl);
         $data = json_decode($response, true);
         
@@ -90,29 +109,24 @@ class BookController extends Controller
             $gambar_url = $data['items'][0]['volumeInfo']['imageLinks']['thumbnail'];
         }
 
+        // Perbaikan: Menggunakan kolom 'cover' agar sinkron dengan database/seeder
         Book::create([
             'judul' => $judul,
             'penulis' => $request->penulis,
             'kategori' => $request->kategori,
-            'stok' => $request->stok ?? 0,
-            'cover_url' => $gambar_url,
-            'status' => 'baik', // Status default saat input buku
+            'stok' => $request->stok,
+            'cover' => $gambar_url, 
+            'status' => 'baik', 
         ]);
 
         return redirect()->route('admin.inventory')->with('success', 'Buku berhasil ditambahkan!');
     }
 
-    /**
-     * Menampilkan Form Edit Buku
-     */
     public function edit(Book $book)
     {
         return view('books.edit', compact('book'));
     }
 
-    /**
-     * Memperbarui Data Buku
-     */
     public function update(Request $request, Book $book)
     {
         $request->validate([
@@ -123,13 +137,9 @@ class BookController extends Controller
         ]);
 
         $book->update($request->all());
-
         return redirect()->route('admin.inventory')->with('success', 'Data buku berhasil diperbarui!');
     }
 
-    /**
-     * Menghapus Buku
-     */
     public function destroy(Book $book)
     {
         $book->delete();

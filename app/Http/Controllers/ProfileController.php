@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,43 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    /**
+     * --- FITUR ADMIN: PELAYANAN PENGGUNA ---
+     */
+
+    /**
+     * Menampilkan daftar pengguna untuk Admin.
+     */
+    public function manageUsers(): View
+    {
+        // Ambil semua pengguna yang bukan admin
+        $users = User::where('role', '!=', 'admin')->get(); 
+        
+        // Pastikan file view ini ada di resources/views/admin/users_index.blade.php
+        return view('admin.users_index', compact('users'));
+    }
+
+    /**
+     * Fungsi Aktifkan/Nonaktifkan Akun secara otomatis.
+     */
+    public function toggleUserStatus($id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+        
+        // Membalikkan status (true jadi false, false jadi true)
+        $user->is_active = !$user->is_active; 
+        $user->save();
+
+        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        
+        return redirect()->back()->with('success', "Akun {$user->name} berhasil {$status}.");
+    }
+
+
+    /**
+     * --- FITUR BAWAAN: PROFILE USER ---
+     */
+
     /**
      * Display the user's profile form.
      */

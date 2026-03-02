@@ -31,11 +31,12 @@
         <div class="flex items-center gap-4">
             @if (Route::has('login'))
                 @auth
-                    {{-- Jika sudah login (Admin/Zara/Sinta), muncul tombol Dashboard --}}
+                    {{-- Jika user sudah login, arahkan ke dashboard --}}
                     <a href="{{ url('/dashboard') }}" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-xl hover:scale-105 transition-all">
                         Masuk Dashboard →
                     </a>
                 @else
+                    {{-- Jika belum login, tampilkan tombol Masuk dan Daftar --}}
                     <a href="{{ route('login') }}" class="font-bold text-sm text-slate-600 hover:text-blue-600 uppercase tracking-widest transition-all">Masuk</a>
                     @if (Route::has('register'))
                         <a href="{{ route('register') }}" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:scale-105 transition-all">Daftar Baru</a>

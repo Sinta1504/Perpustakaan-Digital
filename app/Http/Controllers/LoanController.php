@@ -11,49 +11,31 @@ use Carbon\Carbon;
 
 class LoanController extends Controller
 {
-    /**
-     * DASHBOARD: Menampilkan rekomendasi buku
-     */
     public function dashboard()
     {
         $recommendedBooks = Book::latest()->take(4)->get();
         return view('dashboard', compact('recommendedBooks'));
     }
 
-    /**
-     * PINJAMAN SAYA (USER)
-     */
     public function index()
     {
         $loans = Loan::with(['book'])
                     ->where('user_id', Auth::id())
                     ->latest()
                     ->get();
-
         return view('loans.index', compact('loans'));
     }
 
-    /**
-     * MONITORING ADMIN (DENGAN FILTER)
-     * TARUH KODE PERBAIKAN DI SINI
-     */
     public function allLoans(Request $request)
-{
-    $query = Loan::with(['user', 'book']);
-
-    if ($request->has('status') && $request->status != '') {
-        $query->where('status', $request->status);
+    {
+        $query = Loan::with(['user', 'book']);
+        if ($request->has('status') && $request->status != '' && $request->status != 'Semua Status') {
+            $query->where('status', strtolower($request->status));
+        }
+        $loans = $query->latest()->get();
+        return view('admin.loans', compact('loans'));
     }
 
-    $loans = $query->latest()->get();
-
-    // Pastikan nama variabel 'loans' sesuai dengan yang dipanggil di Blade
-    return view('admin.loans', compact('loans'));
-}
-
-    /**
-     * FORM PINJAM
-     */
     public function create($id)
     {
         $book = Book::findOrFail($id);
@@ -63,7 +45,7 @@ class LoanController extends Controller
     }
 
     /**
-     * PROSES SIMPAN PINJAMAN
+     * PERBAIKAN: Fitur Stok Berkurang Otomatis
      */
     public function store(Request $request)
     {
@@ -72,6 +54,14 @@ class LoanController extends Controller
             'tanggal_kembali' => 'required|date',
         ]);
 
+        $book = Book::findOrFail($request->book_id);
+
+        // Cek stok sebelum memproses
+        if ($book->stok <= 0) {
+            return redirect()->back()->with('error', 'Maaf, stok buku ini sudah habis!');
+        }
+
+        // 1. Simpan Data Pinjaman
         Loan::create([
             'user_id'         => Auth::id(),
             'book_id'         => $request->book_id,
@@ -80,12 +70,12 @@ class LoanController extends Controller
             'status'          => 'dipinjam',
         ]);
 
-        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam!");
+        // 2. LOGIKA STOK: Kurangi stok buku secara otomatis
+        $book->decrement('stok');
+
+        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Stok berkurang menjadi $book->stok.");
     }
 
-    /**
-     * PROSES KEMBALIKAN & OTOMATIS KE FEEDBACK
-     */
     public function returnBook(Request $request, $id)
     {
         $request->validate([
@@ -102,14 +92,17 @@ class LoanController extends Controller
             'rating' => $request->rating,
         ]);
 
+        // LOGIKA STOK: Tambah kembali stok saat buku dikembalikan
+        $loan->book->increment('stok');
+
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
             'rating'   => $request->rating,
             'pesan'    => $request->ulasan,
-            'kategori' => 'Peminjaman',
+            'kategori' => 'Buku', 
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Buku telah dikembalikan!');
+        return redirect()->route('pinjaman')->with('success', 'Buku dikembalikan! Stok bertambah.');
     }
 }

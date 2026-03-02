@@ -83,6 +83,11 @@
                         <span class="text-lg">🛡️</span> Monitoring
                     </a>
 
+                    {{-- Fitur Baru: Layanan Pengguna --}}
+                    <a href="{{ route('admin.support') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.support') ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                        <span class="text-lg">🎧</span> Layanan Pengguna
+                    </a>
+
                     <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">💬</span> Suara Peminjam
                     </a>

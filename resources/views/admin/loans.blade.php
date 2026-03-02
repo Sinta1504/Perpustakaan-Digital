@@ -2,14 +2,13 @@
 
 @section('content')
 <div class="container mx-auto px-6 py-8">
-    {{-- HEADER HALAMAN DENGAN FORM FILTER --}}
     <div class="flex justify-between items-center mb-10">
         <div>
             <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Daftar Sirkulasi</h2>
-            <p class="text-slate-500 text-sm font-medium">Pantau seluruh koleksi buku digital yang sedang dipinjam secara global.</p>
+            <p class="text-slate-500 text-sm font-medium">Pantau seluruh koleksi buku digital secara global.</p>
         </div>
         
-        {{-- FORM FILTER --}}
+        {{-- Form Filter --}}
         <form action="{{ route('admin.loans') }}" method="GET" class="flex gap-4">
             <select name="status" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="Semua Status" {{ request('status') == 'Semua Status' ? 'selected' : '' }}>Semua Status</option>
@@ -22,7 +21,6 @@
         </form>
     </div>
 
-    {{-- TABEL MONITORING --}}
     <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -37,16 +35,20 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($loans as $loan)
                     <tr class="hover:bg-slate-50/30 transition-colors">
-                        {{-- INFO BUKU DENGAN COVER --}}
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-16 bg-slate-100 rounded-lg flex-shrink-0 overflow-hidden shadow-inner border border-slate-200">
-                                    @if($loan->book->cover)
-                                        <img src="{{ asset('storage/' . $loan->book->cover) }}" 
-                                             class="w-full h-full object-cover" 
-                                             onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
+                                {{-- LOGIKA COVER KATALOG --}}
+                                <div class="w-14 h-20 bg-slate-100 rounded-lg flex-shrink-0 overflow-hidden shadow-md border border-slate-200 flex items-center justify-center">
+                                    @php
+                                        $cover = $loan->book->cover;
+                                        $url = \Illuminate\Support\Str::startsWith($cover, ['http', 'https']) 
+                                               ? $cover 
+                                               : ($cover ? asset('storage/' . $cover) : null);
+                                    @endphp
+                                    @if($url)
+                                        <img src="{{ $url }}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x600?text=Error'">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-400">NO IMG</div>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase">Buku</span>
                                     @endif
                                 </div>
                                 <div>
@@ -56,7 +58,6 @@
                             </div>
                         </td>
 
-                        {{-- INFO PEMINJAM --}}
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-[10px] uppercase shadow-sm border border-blue-100">
@@ -69,13 +70,11 @@
                             </div>
                         </td>
 
-                        {{-- TENGGAT --}}
                         <td class="px-8 py-6">
                             <p class="font-black text-slate-700 uppercase italic text-sm">{{ \Carbon\Carbon::parse($loan->tanggal_kembali)->format('d M Y') }}</p>
                             <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Sirkulasi</p>
                         </td>
 
-                        {{-- STATUS --}}
                         <td class="px-8 py-6 text-center">
                             @if($loan->status == 'dipinjam')
                                 <span class="bg-amber-50 text-amber-600 border border-amber-100 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
@@ -91,7 +90,7 @@
                     @empty
                     <tr>
                         <td colspan="4" class="py-20 text-center font-bold text-slate-400 uppercase tracking-[0.3em] text-xs">
-                            Belum ada aktivitas sirkulasi buku.
+                            Belum ada aktivitas sirkulasi.
                         </td>
                     </tr>
                     @endforelse

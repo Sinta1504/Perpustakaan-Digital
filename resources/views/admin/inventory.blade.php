@@ -3,7 +3,14 @@
 @section('content')
 <div class="container mx-auto px-6 py-8">
     
-    {{-- BARIS 1: RINGKASAN STATISTIK (Buku Rusak & Aktivitas) --}}
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Dashboard Inventori 📊</h2>
+        <a href="{{ route('books.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-lg shadow-blue-200">
+            + Tambah Buku Baru
+        </a>
+    </div>
+
+    {{-- BARIS 1: RINGKASAN STATISTIK --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div class="bg-red-50 p-6 rounded-[2rem] border border-red-100 shadow-sm">
             <h4 class="text-red-600 font-black text-xs uppercase tracking-widest mb-2">Buku Tidak Layak Pakai</h4>
@@ -55,7 +62,7 @@
         {{-- SEKSI: DAFTAR PINJAMAN BELUM KEMBALI --}}
         <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
             <h3 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">⏳ Belum Dikembalikan</h3>
-            <div class="space-y-4">
+            <div class="space-y-4 overflow-y-auto max-h-[400px]">
                 @forelse($activeLoans as $loan)
                 <div class="flex items-center justify-between border-b border-slate-50 pb-4">
                     <div class="flex items-center gap-3">
@@ -79,7 +86,7 @@
         </div>
     </div>
 
-    {{-- BARIS 3: AKUN TIDAK AKTIF (> 5 BULAN) --}}
+    {{-- BARIS 3: MANAJEMEN AKUN PASIF --}}
     <div class="mt-10 bg-slate-900 p-10 rounded-[3rem] text-white">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
@@ -105,6 +112,46 @@
             @empty
             <p class="col-span-full text-center text-slate-500 italic py-10">Tidak ada akun pasif saat ini.</p>
             @endforelse
+        </div>
+    </div>
+
+    {{-- BARIS 4: TABEL MANAJEMEN BUKU --}}
+    <div class="mt-10 bg-white rounded-[3rem] shadow-xl border border-slate-50 overflow-hidden">
+        <div class="p-8 border-b border-slate-50">
+            <h3 class="text-xl font-black text-slate-900 uppercase italic">Koleksi Buku Keseluruhan</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Judul & Penulis</th>
+                        <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Kategori</th>
+                        <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Stok</th>
+                        <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach($books as $book)
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="px-8 py-4">
+                            <h5 class="font-bold text-slate-900">{{ $book->judul }}</h5>
+                            <p class="text-xs text-slate-500">{{ $book->penulis }}</p>
+                        </td>
+                        <td class="px-8 py-4">
+                            <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">{{ $book->kategori }}</span>
+                        </td>
+                        <td class="px-8 py-4 font-bold">{{ $book->stok }}</td>
+                        <td class="px-8 py-4 flex gap-2">
+                            <a href="{{ route('books.edit', $book->id) }}" class="text-amber-500 hover:text-amber-700 font-bold text-xs uppercase">Edit</a>
+                            <form action="{{ route('books.destroy', $book->id) }}" method="POST" onsubmit="return confirm('Hapus buku?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-red-500 hover:text-red-700 font-bold text-xs uppercase">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
