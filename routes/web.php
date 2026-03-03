@@ -64,6 +64,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Pelayanan Pengguna (Kelola Akun Aktif/Nonaktif)
         Route::get('/admin/layanan-pengguna', [ProfileController::class, 'manageUsers'])->name('admin.users.index');
         Route::post('/admin/layanan-pengguna/toggle/{id}', [ProfileController::class, 'toggleUserStatus'])->name('admin.users.toggle');
+
+        // --- FITUR BARU: Respon Bantuan (Layanan Pengguna) ---
+        // Menampilkan halaman respon untuk tiket bantuan
+        Route::get('/admin/layanan-pengguna/{id}/respon', [ProfileController::class, 'showRespon'])->name('admin.support.respon');
+        // Menyimpan jawaban admin terhadap kendala user
+        Route::post('/admin/layanan-pengguna/{id}/jawab', [ProfileController::class, 'storeRespon'])->name('admin.support.jawab');
         
         // Fitur Suara Peminjam (Feedback & Review)
         Route::get('/admin/suara-peminjam', [FeedbackController::class, 'index'])->name('admin.feedback.index');
@@ -71,10 +77,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/admin/feedback/{id}', [FeedbackController::class, 'destroy'])->name('admin.feedback.destroy');
         
         // --- PERBAIKAN CRUD INVENTORI BUKU ---
-        // Kita menggunakan Resource agar tombol edit (books.edit) dan hapus (books.destroy) aktif otomatis
         Route::resource('books', BookController::class)->except(['index', 'show']);
         
-        // Rute tambahan agar link lama Anda tetap jalan
+        // Rute tambahan agar link lama tetap jalan
         Route::get('/buku/tambah', [BookController::class, 'create'])->name('books.create.manual');
     });
 });
