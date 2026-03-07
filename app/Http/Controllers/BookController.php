@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Loan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
@@ -15,7 +16,7 @@ class BookController extends Controller
      */
     public function inventory()
     {
-        // 1. Buku paling sering dipinjam (Top 5) berdasarkan relasi loans
+        // 1. Buku paling sering dipinjam (Top 5)
         $topBooks = Book::withCount('loans')
             ->orderBy('loans_count', 'desc')
             ->take(5)
@@ -37,7 +38,19 @@ class BookController extends Controller
             ->latest()
             ->get();
 
-        // 5. Ambil SEMUA buku untuk inventori
+        // 5. Suara Peminjam (Dengan pengaman try-catch agar tidak error jika kolom belum ada)
+        try {
+            $allReviews = Loan::with(['user', 'book'])
+                ->where('status', 'dikembalikan')
+                ->whereNotNull('review')
+                ->latest()
+                ->get();
+        } catch (\Exception $e) {
+            // Jika database error karena kolom review belum ada, buat array kosong agar page tidak crash
+            $allReviews = collect();
+        }
+
+        // 6. Ambil SEMUA buku untuk inventori
         $books = Book::latest()->get(); 
 
         return view('admin.inventory', compact(
@@ -45,7 +58,8 @@ class BookController extends Controller
             'inactiveUsers', 
             'brokenBooksCount', 
             'activeLoans', 
-            'books'
+            'books',
+            'allReviews'
         ));
     }
 
@@ -65,7 +79,6 @@ class BookController extends Controller
     {
         $query = Book::query();
 
-        // Fitur Pencarian
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->search . '%')
@@ -74,7 +87,6 @@ class BookController extends Controller
             });
         }
 
-        // Mengambil semua hasil tanpa batasan agar semua buku muncul
         $books = $query->latest()->get(); 
 
         return view('books.index', compact('books'));
@@ -86,36 +98,29 @@ class BookController extends Controller
     }
 
     /**
-     * Fitur Simpan Buku (Sudah Disinkronkan menggunakan kolom 'cover')
+     * Fitur Simpan Buku (Upload Manual)
      */
-    public function store(Request $request) 
+    public function store(Request $request)
     {
         $request->validate([
             'judul' => 'required',
             'penulis' => 'required',
             'kategori' => 'required',
-            'stok' => 'required|integer|min:0',
+            'cover' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'stok' => 'required|numeric|min:0',
         ]);
 
-        $judul = $request->judul;
-        $query = urlencode($judul);
-        $apiUrl = "https://www.googleapis.com/books/v1/volumes?q=" . $query . "&maxResults=1";
-        
-        $response = @file_get_contents($apiUrl);
-        $data = json_decode($response, true);
-        
-        $gambar_url = "https://via.placeholder.com/400x600?text=No+Cover"; 
-        if (isset($data['items'][0]['volumeInfo']['imageLinks']['thumbnail'])) {
-            $gambar_url = $data['items'][0]['volumeInfo']['imageLinks']['thumbnail'];
-        }
+        $file = $request->file('cover');
+        $namaFile = time() . '.' . $file->getClientOriginalExtension();
+        $file->storeAs('public/covers', $namaFile);
 
-        // Perbaikan: Menggunakan kolom 'cover' agar sinkron dengan database/seeder
         Book::create([
-            'judul' => $judul,
+            'judul' => $request->judul,
             'penulis' => $request->penulis,
+            'sinopsis' => $request->sinopsis,
             'kategori' => $request->kategori,
             'stok' => $request->stok,
-            'cover' => $gambar_url, 
+            'cover' => 'covers/' . $namaFile, 
             'status' => 'baik', 
         ]);
 
@@ -136,12 +141,32 @@ class BookController extends Controller
             'stok' => 'required|integer|min:0',
         ]);
 
-        $book->update($request->all());
+        if ($request->hasFile('cover')) {
+            $request->validate(['cover' => 'image|mimes:jpeg,png,jpg|max:2048']);
+            if ($book->cover) {
+                Storage::delete('public/' . $book->cover);
+            }
+            $file = $request->file('cover');
+            $namaFile = time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('public/covers', $namaFile);
+            $book->cover = 'covers/' . $namaFile;
+        }
+
+        $book->judul = $request->judul;
+        $book->penulis = $request->penulis;
+        $book->kategori = $request->kategori;
+        $book->stok = $request->stok;
+        $book->sinopsis = $request->sinopsis;
+        $book->save();
+
         return redirect()->route('admin.inventory')->with('success', 'Data buku berhasil diperbarui!');
     }
 
     public function destroy(Book $book)
     {
+        if ($book->cover) {
+            Storage::delete('public/' . $book->cover);
+        }
         $book->delete();
         return redirect()->back()->with('success', 'Buku telah dihapus dari koleksi.');
     }

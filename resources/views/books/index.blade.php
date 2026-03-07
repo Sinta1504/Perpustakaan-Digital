@@ -1,7 +1,7 @@
 @extends('layouts.app_custom')
 
 @section('content')
-<div class="container mx-auto">
+<div class="container mx-auto px-6 py-12">
     <div class="mb-10">
         <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Katalog Buku</h2>
         <p class="text-slate-500 font-medium text-sm">Menampilkan semua koleksi buku tersedia.</p>
@@ -12,9 +12,10 @@
         <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl transition-all group">
             <div class="relative mb-6">
                 <div class="aspect-[3/4] rounded-[2rem] overflow-hidden bg-slate-100">
-                    {{-- PERBAIKAN: Logika gambar agar support URL API dan file Lokal storage --}}
+                    {{-- PERBAIKAN FULL: Menggabungkan logika URL, Storage, Shadow, dan OnError --}}
                     <img src="{{ Str::startsWith($book->cover, 'http') ? $book->cover : asset('storage/' . $book->cover) }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                         class="w-full h-full object-cover rounded-2xl shadow-lg group-hover:scale-105 transition-transform duration-500"
+                         onerror="this.src='https://placehold.co/400x600?text=Cover+Buku'">
                 </div>
             </div>
 
@@ -29,7 +30,6 @@
             </div>
 
             <div class="space-y-2">
-                {{-- PERBAIKAN: Mengganti form direct store menjadi tombol Detail agar User bisa lihat Sinopsis & Denda --}}
                 @if($book->stok > 0)
                     <a href="{{ route('loans.create', $book->id) }}" 
                        class="block w-full py-3 bg-slate-900 text-center text-white rounded-xl font-black text-[10px] uppercase italic tracking-widest hover:bg-blue-600 transition-all">
