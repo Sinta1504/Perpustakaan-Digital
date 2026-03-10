@@ -27,7 +27,9 @@
                 Buku-buku pilihan yang paling banyak dibaca oleh pengguna lain.
             </p>
         </div>
-        <a href="{{ route('katalog') }}" class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-sm group">
+        
+        {{-- PERBAIKAN DI SINI: route('katalog') diubah menjadi route('books.index') --}}
+        <a href="{{ route('books.index') }}" class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-sm group">
             Lihat Semua Katalog 
             <span class="group-hover:translate-x-1 transition-transform">→</span>
         </a>

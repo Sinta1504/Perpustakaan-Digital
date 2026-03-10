@@ -38,7 +38,7 @@ class BookController extends Controller
             ->latest()
             ->get();
 
-        // 5. Suara Peminjam (Dengan pengaman try-catch agar tidak error jika kolom belum ada)
+        // 5. Suara Peminjam
         try {
             $allReviews = Loan::with(['user', 'book'])
                 ->where('status', 'dikembalikan')
@@ -46,7 +46,6 @@ class BookController extends Controller
                 ->latest()
                 ->get();
         } catch (\Exception $e) {
-            // Jika database error karena kolom review belum ada, buat array kosong agar page tidak crash
             $allReviews = collect();
         }
 
@@ -73,12 +72,13 @@ class BookController extends Controller
     }
 
     /**
-     * Menampilkan Halaman KATALOG (Menampilkan SEMUA buku)
+     * Menampilkan Halaman KATALOG (Dengan Logika Pencarian)
      */
     public function index(Request $request)
     {
         $query = Book::query();
 
+        // Logika Pencarian agar sinkron dengan Search Bar di View
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->search . '%')
@@ -98,7 +98,7 @@ class BookController extends Controller
     }
 
     /**
-     * Fitur Simpan Buku (Upload Manual)
+     * Fitur Simpan Buku (Perbaikan Path Storage)
      */
     public function store(Request $request)
     {
@@ -110,19 +110,23 @@ class BookController extends Controller
             'stok' => 'required|numeric|min:0',
         ]);
 
-        $file = $request->file('cover');
-        $namaFile = time() . '.' . $file->getClientOriginalExtension();
-        $file->storeAs('public/covers', $namaFile);
+        if ($request->hasFile('cover')) {
+            $file = $request->file('cover');
+            $namaFile = time() . '_' . $file->getClientOriginalName();
+            
+            // Simpan ke storage/app/public/covers menggunakan disk 'public'
+            $path = $file->storeAs('covers', $namaFile, 'public');
 
-        Book::create([
-            'judul' => $request->judul,
-            'penulis' => $request->penulis,
-            'sinopsis' => $request->sinopsis,
-            'kategori' => $request->kategori,
-            'stok' => $request->stok,
-            'cover' => 'covers/' . $namaFile, 
-            'status' => 'baik', 
-        ]);
+            Book::create([
+                'judul' => $request->judul,
+                'penulis' => $request->penulis,
+                'sinopsis' => $request->sinopsis,
+                'kategori' => $request->kategori,
+                'stok' => $request->stok,
+                'cover' => $path, // Simpan 'covers/nama.jpg'
+                'status' => 'baik', 
+            ]);
+        }
 
         return redirect()->route('admin.inventory')->with('success', 'Buku berhasil ditambahkan!');
     }
@@ -132,6 +136,9 @@ class BookController extends Controller
         return view('books.edit', compact('book'));
     }
 
+    /**
+     * Fitur Update Buku (Perbaikan Path Storage)
+     */
     public function update(Request $request, Book $book)
     {
         $request->validate([
@@ -143,13 +150,16 @@ class BookController extends Controller
 
         if ($request->hasFile('cover')) {
             $request->validate(['cover' => 'image|mimes:jpeg,png,jpg|max:2048']);
-            if ($book->cover) {
-                Storage::delete('public/' . $book->cover);
+            
+            // Hapus file lama jika ada
+            if ($book->cover && Storage::disk('public')->exists($book->cover)) {
+                Storage::disk('public')->delete($book->cover);
             }
+
             $file = $request->file('cover');
-            $namaFile = time() . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('public/covers', $namaFile);
-            $book->cover = 'covers/' . $namaFile;
+            $namaFile = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('covers', $namaFile, 'public');
+            $book->cover = $path;
         }
 
         $book->judul = $request->judul;
@@ -164,8 +174,8 @@ class BookController extends Controller
 
     public function destroy(Book $book)
     {
-        if ($book->cover) {
-            Storage::delete('public/' . $book->cover);
+        if ($book->cover && Storage::disk('public')->exists($book->cover)) {
+            Storage::disk('public')->delete($book->cover);
         }
         $book->delete();
         return redirect()->back()->with('success', 'Buku telah dihapus dari koleksi.');

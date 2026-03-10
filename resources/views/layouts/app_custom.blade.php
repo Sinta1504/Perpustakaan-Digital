@@ -33,6 +33,15 @@
             background: #1e293b;
             border-radius: 10px;
         }
+
+        /* Animation for flash messages */
+        .animate-fade-in-down {
+            animation: fadeInDown 0.5s ease-out;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
@@ -83,11 +92,11 @@
                         <span class="text-lg">🛡️</span> Monitoring
                     </a>
 
-                    {{-- Fitur Baru: Layanan Pengguna --}}
                     <a href="{{ route('admin.support') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.support') ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">🎧</span> Layanan Pengguna
                     </a>
 
+                    {{-- Suara Peminjam (Feedback) dengan Logika Active yang Benar --}}
                     <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">💬</span> Suara Peminjam
                     </a>
@@ -153,7 +162,7 @@
             @endif
 
             @if(session('error'))
-                <div class="mb-8 p-5 bg-red-50 border border-red-100 text-red-700 rounded-[2rem] font-bold text-sm flex items-center gap-4 shadow-sm">
+                <div class="mb-8 p-5 bg-red-50 border border-red-100 text-red-700 rounded-[2rem] font-bold text-sm flex items-center gap-4 shadow-sm animate-fade-in-down">
                     <span class="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center">✕</span>
                     {{ session('error') }}
                 </div>

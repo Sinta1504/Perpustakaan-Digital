@@ -17,8 +17,13 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-// Rute Katalog (Menampilkan semua buku)
-Route::get('/katalog', [BookController::class, 'index'])->name('katalog');
+/**
+ * PERBAIKAN: Rute Katalog dengan DUA NAMA (books.index dan katalog)
+ * Ini memastikan fitur pencarian baru (books.index) jalan, 
+ * dan link lama di dashboard/navbar (katalog) tidak error.
+ */
+Route::get('/katalog', [BookController::class, 'index'])->name('books.index');
+Route::get('/katalog-alias', [BookController::class, 'index'])->name('katalog'); 
 Route::get('/katalog/{book}', [BookController::class, 'show'])->name('books.show');
 
 

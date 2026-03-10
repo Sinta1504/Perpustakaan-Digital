@@ -11,22 +11,31 @@ class FeedbackController extends Controller
     public function index()
     {
         // Mengambil ulasan terbaru dengan data user dan buku
+        // Pastikan relasi 'user' dan 'book' sudah ada di Model Feedback
         $feedbacks = Feedback::with(['user', 'book'])->latest()->get();
         
-        // Mengarahkan ke file resources/views/feedbacks.blade.php
-        return view('feedbacks', compact('feedbacks'));
+        // PERBAIKAN: Mengarahkan ke admin.feedbacks (resources/views/admin/feedbacks.blade.php)
+        return view('admin.feedbacks', compact('feedbacks'));
     }
 
     public function reply(Request $request, $id)
     {
-        $request->validate(['reply' => 'required|min:2']);
+        // Validasi input balasan
+        $request->validate([
+            'reply' => 'required|min:2'
+        ]);
 
         try {
             $feedback = Feedback::findOrFail($id);
-            $feedback->update(['admin_reply' => $request->reply]);
+            
+            // Mengupdate kolom admin_reply di database
+            $feedback->update([
+                'admin_reply' => $request->reply
+            ]);
+
             return redirect()->back()->with('success', 'Balasan berhasil dikirim!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengirim balasan.');
+            return redirect()->back()->with('error', 'Gagal mengirim balasan: ' . $e->getMessage());
         }
     }
 
@@ -35,6 +44,7 @@ class FeedbackController extends Controller
         try {
             $feedback = Feedback::findOrFail($id);
             $feedback->delete();
+            
             return redirect()->back()->with('success', 'Ulasan berhasil dihapus.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menghapus ulasan.');
