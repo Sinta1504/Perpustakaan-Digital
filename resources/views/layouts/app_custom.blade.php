@@ -84,20 +84,23 @@
                 <div class="pt-6 mt-6 border-t border-slate-800">
                     <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Administrator</p>
                     
-                    <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.inventory') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                    {{-- Inventori - Sekarang Biru --}}
+                    <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.inventory') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">📊</span> Inventori
                     </a>
 
-                    <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                    {{-- Monitoring - Sekarang Biru --}}
+                    <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">🛡️</span> Monitoring
                     </a>
 
-                    <a href="{{ route('admin.support') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.support') ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                    {{-- Layanan Pengguna - Sekarang Biru --}}
+                    <a href="{{ route('admin.support') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.support') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">🎧</span> Layanan Pengguna
                     </a>
 
-                    {{-- Suara Peminjam (Feedback) dengan Logika Active yang Benar --}}
-                    <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                    {{-- Suara Peminjam - Sekarang Biru --}}
+                    <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">💬</span> Suara Peminjam
                     </a>
                 </div>
