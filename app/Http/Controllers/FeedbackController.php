@@ -8,16 +8,22 @@ use Illuminate\Support\Facades\Auth;
 
 class FeedbackController extends Controller
 {
+    /**
+     * Menampilkan daftar ulasan dengan relasi user dan buku
+     */
     public function index()
     {
-        // Mengambil ulasan terbaru dengan data user dan buku
-        // Pastikan relasi 'user' dan 'book' sudah ada di Model Feedback
+        // Mengambil ulasan terbaru lengkap dengan data user dan buku
+        // Menggunakan Eager Loading (with) agar gambar buku bisa dipanggil di Blade
         $feedbacks = Feedback::with(['user', 'book'])->latest()->get();
         
-        // PERBAIKAN: Mengarahkan ke admin.feedbacks (resources/views/admin/feedbacks.blade.php)
+        // Memanggil file: resources/views/admin/feedbacks.blade.php
         return view('admin.feedbacks', compact('feedbacks'));
     }
 
+    /**
+     * Mengirim atau memperbarui balasan admin
+     */
     public function reply(Request $request, $id)
     {
         // Validasi input balasan
@@ -39,6 +45,9 @@ class FeedbackController extends Controller
         }
     }
 
+    /**
+     * Menghapus ulasan secara permanen
+     */
     public function destroy($id)
     {
         try {

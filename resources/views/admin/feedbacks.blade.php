@@ -30,9 +30,19 @@
                         
                         {{-- Info Buku & Rating --}}
                         <div class="flex gap-4 min-w-[220px]">
-                            <div class="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center text-[8px] font-black text-slate-400 uppercase italic border border-slate-100 shadow-inner flex-shrink-0">
-                                BUKU
+                            {{-- BAGIAN GAMBAR BUKU YANG DIPERBAIKI --}}
+                            <div class="w-16 h-20 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-inner flex items-center justify-center">
+                                @if($item->book && $item->book->image)
+                                    <img src="{{ asset('storage/covers/' . $item->book->image) }}" 
+                                         alt="{{ $item->book->judul }}" 
+                                         class="w-full h-full object-cover">
+                                @else
+                                    <div class="text-[8px] font-black text-slate-300 uppercase italic text-center">
+                                        No<br>Cover
+                                    </div>
+                                @endif
                             </div>
+
                             <div class="flex flex-col justify-center">
                                 <h4 class="font-black text-slate-900 uppercase italic text-xs leading-tight mb-1 group-hover:text-blue-600 transition-colors">
                                     {{ $item->book->judul ?? 'Judul Tidak Tersedia' }}
@@ -78,7 +88,6 @@
                         "{{ $item->pesan ?? $item->message }}"
                     </p>
                     
-                    {{-- Tampilan Balasan Admin --}}
                     @if($item->admin_reply)
                         <div class="mt-6 p-5 bg-white rounded-2xl border-l-4 border-blue-600 shadow-sm">
                             <small class="block font-black text-[9px] text-blue-600 uppercase tracking-widest mb-2">Respon Admin:</small>
@@ -106,7 +115,6 @@
                 </div>
             </div>
         @empty
-            {{-- Tampilan Saat Kosong --}}
             <div class="bg-slate-50 rounded-[3rem] p-24 text-center border-4 border-dashed border-slate-200">
                 <div class="text-7xl mb-6 opacity-20 italic font-black text-slate-400 uppercase tracking-tighter">
                     Belum Ada Ulasan.
@@ -117,7 +125,7 @@
     </div>
 </div>
 
-{{-- 3. MODAL BALASAN --}}
+{{-- MODAL BALASAN --}}
 <div id="replyModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-[2.5rem] max-w-lg w-full p-10 shadow-2xl transform transition-all border border-slate-100">
         <div class="mb-8">
@@ -147,7 +155,6 @@
 
 <script>
     function openReplyModal(id, text) {
-        // Form action diarahkan ke rute reply feedback
         document.getElementById('replyForm').action = "/admin/feedback/" + id + "/reply";
         document.getElementById('replyModal').classList.remove('hidden');
     }
@@ -156,7 +163,6 @@
         document.getElementById('replyModal').classList.add('hidden');
     }
 
-    // Menutup modal jika klik di area luar modal
     window.onclick = function(event) {
         let modal = document.getElementById('replyModal');
         if (event.target == modal) {
