@@ -11,10 +11,22 @@ use Carbon\Carbon;
 
 class LoanController extends Controller
 {
+    /**
+     * DASHBOARD: Menampilkan Rekomendasi Buku & Suara Peminjam
+     */
     public function dashboard()
     {
+        // 1. Mengambil data buku rekomendasi terbaru
         $recommendedBooks = Book::latest()->take(4)->get();
-        return view('dashboard', compact('recommendedBooks'));
+
+        // 2. PERBAIKAN: Mengambil ulasan lengkap dengan relasi buku (untuk gambar) dan user
+        $feedbacks = Feedback::with(['book', 'user'])
+                            ->latest()
+                            ->take(3)
+                            ->get();
+
+        // 3. Kirim kedua variabel ke view dashboard
+        return view('dashboard', compact('recommendedBooks', 'feedbacks'));
     }
 
     public function index()
@@ -44,9 +56,6 @@ class LoanController extends Controller
         return view('loans.create', compact('book', 'tanggalPinjam', 'tanggalKembali'));
     }
 
-    /**
-     * PERBAIKAN: Fitur Stok Berkurang Otomatis
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -56,12 +65,10 @@ class LoanController extends Controller
 
         $book = Book::findOrFail($request->book_id);
 
-        // Cek stok sebelum memproses
         if ($book->stok <= 0) {
             return redirect()->back()->with('error', 'Maaf, stok buku ini sudah habis!');
         }
 
-        // 1. Simpan Data Pinjaman
         Loan::create([
             'user_id'         => Auth::id(),
             'book_id'         => $request->book_id,
@@ -70,10 +77,9 @@ class LoanController extends Controller
             'status'          => 'dipinjam',
         ]);
 
-        // 2. LOGIKA STOK: Kurangi stok buku secara otomatis
         $book->decrement('stok');
 
-        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Stok berkurang menjadi $book->stok.");
+        return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Stok berkurang.");
     }
 
     public function returnBook(Request $request, $id)
@@ -92,7 +98,6 @@ class LoanController extends Controller
             'rating' => $request->rating,
         ]);
 
-        // LOGIKA STOK: Tambah kembali stok saat buku dikembalikan
         $loan->book->increment('stok');
 
         Feedback::create([
@@ -103,6 +108,6 @@ class LoanController extends Controller
             'kategori' => 'Buku', 
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Buku dikembalikan! Stok bertambah.');
+        return redirect()->route('pinjaman')->with('success', 'Buku dikembalikan!');
     }
 }

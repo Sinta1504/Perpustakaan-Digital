@@ -3,14 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Loan;     // Sesuai dengan model Peminjaman Anda
-use App\Models\Feedback; // Sesuai dengan model Suara Peminjam
+use App\Models\Loan;     // Model Peminjaman Anda
+use App\Models\Feedback; // Model Suara Peminjam
+use App\Models\Book;     // TAMBAHKAN INI agar bisa memanggil data buku
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;       // Library untuk mengolah tanggal
 
 class PinjamanController extends Controller
 {
     /**
-     * Memproses pengembalian buku, update status, dan simpan ulasan.
+     * Menampilkan Dashboard dengan Rekomendasi Buku dan Suara Peminjam
+     */
+    public function index()
+    {
+        // 1. Mengambil data buku untuk bagian rekomendasi
+        $recommendedBooks = Book::take(4)->get(); 
+
+        // 2. Mengambil ulasan terbaru lengkap dengan relasi buku (untuk gambar) dan user
+        $feedbacks = Feedback::with(['book', 'user'])->latest()->take(3)->get();
+
+        // 3. Mengirim data ke view dashboard
+        return view('dashboard', compact('recommendedBooks', 'feedbacks'));
+    }
+
+    /**
+     * Memproses pengembalian buku, update status, hitung denda otomatis, dan simpan ulasan.
      */
     public function kembalikan(Request $request, $id)
     {
@@ -29,27 +46,43 @@ class PinjamanController extends Controller
                 return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk tindakan ini.');
             }
 
-            // 3. Update status peminjaman menjadi dikembalikan
+            // --- LOGIKA DENDA OTOMATIS (Update 25 Maret 2026) ---
+            $tgl_tenggat = Carbon::parse($loan->tanggal_tenggat)->startOfDay();
+            $hari_ini = Carbon::now()->startOfDay(); 
+            
+            $denda = 0;
+
+            if ($hari_ini->gt($tgl_tenggat)) {
+                $selisih_hari = $hari_ini->diffInDays($tgl_tenggat);
+                $denda = $selisih_hari * 2000; // Denda Rp 2.000 per hari
+            }
+            // ----------------------------------------------------
+
+            // 3. Update status peminjaman
             $loan->update([
                 'status' => 'Sudah Dikembalikan',
-                'tanggal_kembali' => now(), // Mencatat tanggal pengembalian real-time
+                'tanggal_kembali' => Carbon::now(),
+                'denda' => $denda,
             ]);
 
-            // 4. Simpan ulasan ke tabel Feedback (Suara Peminjam)
-            // Menggunakan kolom 'pesan' dan 'kategori' sesuai migration Anda
+            // 4. Simpan ulasan ke tabel Feedback
             Feedback::create([
                 'user_id'  => Auth::id(),
                 'book_id'  => $loan->book_id,
-                'pesan'    => $request->ulasan, // Data dari textarea modal
+                'pesan'    => $request->ulasan, 
                 'rating'   => $request->rating,
-                'kategori' => 'lainnya',      // Mengisi enum kategori yang wajib diisi
+                'kategori' => 'lainnya',        
             ]);
 
-            // 5. Kembali ke halaman pinjaman dengan pesan sukses
-            return redirect()->route('pinjaman')->with('success', 'Buku berhasil dikembalikan dan ulasan Anda telah diterima oleh Admin!');
+            // 5. Response sukses
+            $pesan_sukses = 'Buku berhasil dikembalikan!';
+            if ($denda > 0) {
+                $pesan_sukses .= ' Anda dikenakan denda keterlambatan sebesar Rp ' . number_format($denda, 0, ',', '.');
+            }
+
+            return redirect()->route('pinjaman')->with('success', $pesan_sukses);
             
         } catch (\Exception $e) {
-            // Menangkap error jika ada kegagalan sistem
             return redirect()->back()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
         }
     }

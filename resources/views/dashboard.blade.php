@@ -28,7 +28,6 @@
             </p>
         </div>
         
-        {{-- PERBAIKAN DI SINI: route('katalog') diubah menjadi route('books.index') --}}
         <a href="{{ route('books.index') }}" class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-sm group">
             Lihat Semua Katalog 
             <span class="group-hover:translate-x-1 transition-transform">→</span>
@@ -76,11 +75,67 @@
         @endforeach
     </div>
 
-    {{-- Footer/Empty State jika tidak ada buku --}}
     @if($recommendedBooks->isEmpty())
     <div class="bg-slate-100 rounded-[3rem] p-20 text-center border-4 border-dashed border-slate-200">
         <p class="text-slate-400 font-black uppercase tracking-widest italic">Belum ada buku rekomendasi hari ini.</p>
     </div>
     @endif
+
+    {{-- --- BAGIAN BARU: SUARA PEMINJAM --- --}}
+    <div class="mt-24 mb-10">
+        <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">
+            Suara Peminjam 💬
+        </h2>
+        <p class="text-slate-500 font-medium mt-1">
+            Apa kata mereka tentang koleksi buku di E-LIB?
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        @foreach($feedbacks as $feedback)
+        <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+            <div class="flex items-start gap-4 mb-4">
+                {{-- Menampilkan Gambar Buku --}}
+                <div class="w-16 h-20 flex-shrink-0 bg-slate-50 rounded-xl overflow-hidden shadow-inner border border-slate-100">
+                    @php
+                        $coverBook = $feedback->book->cover ?? '';
+                        $urlFeedbackCover = \Illuminate\Support\Str::startsWith($coverBook, 'http') 
+                                            ? $coverBook 
+                                            : asset('storage/' . $coverBook);
+                    @endphp
+                    <img src="{{ $coverBook ? $urlFeedbackCover : 'https://placehold.co/400x600?text=No+Cover' }}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                         alt="Cover Buku">
+                </div>
+
+                <div class="flex-1">
+                    <h5 class="font-black text-slate-900 uppercase italic text-xs line-clamp-1">
+                        {{ $feedback->book->judul ?? 'Buku Tanpa Judul' }}
+                    </h5>
+                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-1">
+                        {{ $feedback->rating }}/5 ⭐
+                    </p>
+                    <div class="mt-2">
+                        <p class="text-xs text-slate-600 font-medium italic line-clamp-3">
+                            "{{ $feedback->pesan }}"
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Info User Peminjam --}}
+            <div class="flex items-center gap-3 pt-4 border-t border-slate-50">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-black uppercase">
+                    {{ substr($feedback->user->name ?? 'U', 0, 1) }}
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-800 uppercase italic">{{ $feedback->user->name ?? 'Anonim' }}</p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">Peminjam Setia</p>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
 </div>
 @endsection

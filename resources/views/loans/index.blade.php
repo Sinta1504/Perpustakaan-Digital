@@ -116,16 +116,39 @@
                         </td>
 
                         <td class="px-8 py-5 text-sm font-bold text-slate-700">{{ $loan->user->name ?? 'User' }}</td>
-                        <td class="px-8 py-5 text-sm font-black text-slate-600 uppercase">
-                            {{ \Carbon\Carbon::parse($loan->tanggal_kembali)->translatedFormat('d M Y') }}
+                        
+                        {{-- KOLOM TENGGAT DENGAN LOGIKA TERLAMBAT --}}
+                        <td class="px-8 py-5">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-black text-slate-600 uppercase">
+                                    {{ \Carbon\Carbon::parse($loan->tanggal_tenggat)->translatedFormat('d M Y') }}
+                                </span>
+                                {{-- Jika sedang dipinjam dan sudah lewat tanggal sekarang --}}
+                                @if($loan->status === 'dipinjam' && \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($loan->tanggal_tenggat)))
+                                    <span class="text-[9px] font-black text-red-500 uppercase italic mt-1 animate-pulse">
+                                        ⚠️ Terlambat {{ \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($loan->tanggal_tenggat)) }} Hari
+                                    </span>
+                                @endif
+                            </div>
                         </td>
+
+                        {{-- KOLOM STATUS DENGAN INFORMASI DENDA --}}
                         <td class="px-8 py-5">
                             @if($loan->status === 'dipinjam')
-                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">Sedang Dipinjam</span>
+                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit">Sedang Dipinjam</span>
+                                {{-- Info Estimasi Denda --}}
+                                @if(\Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($loan->tanggal_tenggat)))
+                                    <p class="text-[9px] font-bold text-red-600 mt-1">Estimasi Denda: Rp {{ number_format((\Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($loan->tanggal_tenggat)) + 1) * 2000, 0, ',', '.') }}</p>
+                                @endif
                             @else
-                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200">Sudah Kembali</span>
+                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">Sudah Kembali</span>
+                                {{-- Tampilan Denda yang sudah dibayar --}}
+                                @if($loan->denda > 0)
+                                    <p class="text-[9px] font-bold text-orange-600 mt-1">Denda Dibayar: Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
+                                @endif
                             @endif
                         </td>
+
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
                                 <span class="text-[10px] font-black text-blue-600 uppercase">{{ $loan->rating }}/5 ⭐</span>
@@ -162,10 +185,8 @@
 {{-- MODAL --}}
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl">
-        {{-- BAGIAN PENTING: ACTION FORM DIKOSONGKAN KARENA AKAN DIISI OLEH JS --}}
         <form id="returnForm" method="POST">
             @csrf
-            {{-- PERUBAHAN: Gunakan rute pinjaman.kembalikan yang ada di web.php --}}
             <div class="p-8">
                 <div class="text-center mb-6">
                     <h3 class="text-xl font-black text-slate-900 uppercase italic" id="modalBookTitle">Kembalikan Buku</h3>
@@ -198,10 +219,7 @@
 
 <script>
     function openReturnModal(id, title) {
-        // PERBAIKAN: Arahkan action form ke rute pinjaman.kembalikan
-        // Karena di web.php rutenya adalah /pinjaman/kembalikan/{id}
         document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
-        
         document.getElementById('modalBookTitle').innerText = title;
         document.getElementById('returnModal').classList.remove('hidden');
     }
@@ -210,7 +228,6 @@
         document.getElementById('returnModal').classList.add('hidden');
     }
 
-    // Menutup modal jika klik di luar box
     window.onclick = function(event) {
         let modal = document.getElementById('returnModal');
         if (event.target == modal) {

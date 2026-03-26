@@ -4,6 +4,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\PinjamanController; // Tambahkan ini jika belum ada
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,34 +13,31 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// --- 1. PUBLIC ROUTES (Bisa diakses tanpa login) ---
+// --- 1. PUBLIC ROUTES ---
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-/**
- * PERBAIKAN: Rute Katalog dengan DUA NAMA (books.index dan katalog)
- * Ini memastikan fitur pencarian baru (books.index) jalan, 
- * dan link lama di dashboard/navbar (katalog) tidak error.
- */
 Route::get('/katalog', [BookController::class, 'index'])->name('books.index');
 Route::get('/katalog-alias', [BookController::class, 'index'])->name('katalog'); 
 Route::get('/katalog/{book}', [BookController::class, 'show'])->name('books.show');
 
 
-// --- 2. AUTHENTICATED ROUTES (User & Admin) ---
+// --- 2. AUTHENTICATED ROUTES ---
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    // Dashboard Utama
+    /**
+     * DASHBOARD UTAMA
+     * Menggunakan LoanController@dashboard sesuai struktur file kamu sebelumnya
+     */
     Route::get('/dashboard', [LoanController::class, 'dashboard'])->name('dashboard');
     Route::get('/home', [LoanController::class, 'dashboard'])->name('home');
 
-    // Mencegah error Sidebar
     Route::get('/hubungi-kami', function () {
         return view('contact.index'); 
     })->name('contact.index');
 
-    // Profile Management (Sisi User)
+    // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -48,43 +46,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pinjaman', [LoanController::class, 'index'])->name('pinjaman');
     Route::get('/pinjam/{id}', [LoanController::class, 'create'])->name('loans.create');
     Route::post('/pinjam', [LoanController::class, 'store'])->name('loans.store');
-    Route::post('/pinjaman/kembalikan/{id}', [LoanController::class, 'returnBook'])->name('pinjaman.kembalikan');
     
-    // Feedback Store (User kirim ulasan)
+    // PERBAIKAN: Arahkan rute kembalikan ke PinjamanController jika logikanya ada di sana
+    Route::post('/pinjaman/kembalikan/{id}', [PinjamanController::class, 'kembalikan'])->name('pinjaman.kembalikan');
+    
+    // Feedback Store
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 
 
-    // --- 3. ADMIN ONLY ROUTES (Hanya Role Admin) ---
+    // --- 3. ADMIN ONLY ROUTES ---
     Route::middleware(['admin'])->group(function () {
         
-        // Monitoring & Layanan Utama
         Route::get('/admin/monitoring-pinjaman', [LoanController::class, 'allLoans'])->name('admin.loans');
         Route::get('/admin/inventori', [BookController::class, 'inventory'])->name('admin.inventory');
         
-        // FITUR: Pusat Layanan Pengguna (Pusat Bantuan)
         Route::get('/admin/support', function () {
             return view('admin.support');
         })->name('admin.support');
         
-        // Pelayanan Pengguna (Kelola Akun Aktif/Nonaktif)
         Route::get('/admin/layanan-pengguna', [ProfileController::class, 'manageUsers'])->name('admin.users.index');
         Route::post('/admin/layanan-pengguna/toggle/{id}', [ProfileController::class, 'toggleUserStatus'])->name('admin.users.toggle');
 
-        // --- FITUR BARU: Respon Bantuan (Layanan Pengguna) ---
-        // Menampilkan halaman respon untuk tiket bantuan
         Route::get('/admin/layanan-pengguna/{id}/respon', [ProfileController::class, 'showRespon'])->name('admin.support.respon');
-        // Menyimpan jawaban admin terhadap kendala user
         Route::post('/admin/layanan-pengguna/{id}/jawab', [ProfileController::class, 'storeRespon'])->name('admin.support.jawab');
         
-        // Fitur Suara Peminjam (Feedback & Review)
         Route::get('/admin/suara-peminjam', [FeedbackController::class, 'index'])->name('admin.feedback.index');
         Route::post('/admin/feedback/{id}/reply', [FeedbackController::class, 'reply'])->name('admin.feedback.reply');
         Route::delete('/admin/feedback/{id}', [FeedbackController::class, 'destroy'])->name('admin.feedback.destroy');
         
-        // --- PERBAIKAN CRUD INVENTORI BUKU ---
+        // CRUD INVENTORI
         Route::resource('books', BookController::class)->except(['index', 'show']);
-        
-        // Rute tambahan agar link lama tetap jalan
         Route::get('/buku/tambah', [BookController::class, 'create'])->name('books.create.manual');
     });
 });
