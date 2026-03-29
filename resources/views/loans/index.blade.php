@@ -117,46 +117,40 @@
 
                         <td class="px-8 py-5 text-sm font-bold text-slate-700">{{ $loan->user->name ?? 'User' }}</td>
                         
-                        {{-- KOLOM TENGGAT DENGAN LOGIKA TERLAMBAT --}}
                         <td class="px-8 py-5">
-                            <div class="flex flex-col">
-                                <span class="text-sm font-black text-slate-600 uppercase">
-                                    {{ \Carbon\Carbon::parse($loan->tanggal_tenggat)->translatedFormat('d M Y') }}
-                                </span>
-                                {{-- Jika sedang dipinjam dan sudah lewat tanggal sekarang --}}
-                                @if($loan->status === 'dipinjam' && \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($loan->tanggal_tenggat)))
-                                    <span class="text-[9px] font-black text-red-500 uppercase italic mt-1 animate-pulse">
-                                        ⚠️ Terlambat {{ \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($loan->tanggal_tenggat)) }} Hari
-                                    </span>
-                                @endif
+                            <div class="text-sm font-black text-slate-600 uppercase">
+                                {{ \Carbon\Carbon::parse($loan->tanggal_kembali)->format('d M Y') }}
                             </div>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Sirkulasi</span>
                         </td>
 
-                        {{-- KOLOM STATUS DENGAN INFORMASI DENDA --}}
                         <td class="px-8 py-5">
                             @if($loan->status === 'dipinjam')
                                 <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit">Sedang Dipinjam</span>
-                                {{-- Info Estimasi Denda --}}
-                                @if(\Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($loan->tanggal_tenggat)))
-                                    <p class="text-[9px] font-bold text-red-600 mt-1">Estimasi Denda: Rp {{ number_format((\Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($loan->tanggal_tenggat)) + 1) * 2000, 0, ',', '.') }}</p>
-                                @endif
                             @else
                                 <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">Sudah Kembali</span>
-                                {{-- Tampilan Denda yang sudah dibayar --}}
                                 @if($loan->denda > 0)
                                     <p class="text-[9px] font-bold text-orange-600 mt-1">Denda Dibayar: Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
                                 @endif
                             @endif
                         </td>
 
+                        {{-- BAGIAN YANG DIPERBAIKI: Menampilkan Ulasan & Rating --}}
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
-                                <span class="text-[10px] font-black text-blue-600 uppercase">{{ $loan->rating }}/5 ⭐</span>
-                                <p class="text-xs text-slate-500 italic line-clamp-1 mt-0.5">"{{ $loan->ulasan }}"</p>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black text-blue-600 uppercase">
+                                        {{ $loan->rating }}/5 ⭐
+                                    </span>
+                                    <p class="text-xs text-slate-500 italic line-clamp-1 mt-0.5">
+                                        "{{ $loan->ulasan }}"
+                                    </p>
+                                </div>
                             @else
                                 <span class="text-slate-400 italic text-[10px]">Belum ada ulasan</span>
                             @endif
                         </td>
+
                         <td class="px-8 py-5 text-center">
                             @if($loan->status === 'dipinjam')
                                 <button type="button" 

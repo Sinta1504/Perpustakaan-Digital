@@ -16,19 +16,19 @@ class LoanController extends Controller
      */
     public function dashboard()
     {
-        // 1. Mengambil data buku rekomendasi terbaru
         $recommendedBooks = Book::latest()->take(4)->get();
 
-        // 2. PERBAIKAN: Mengambil ulasan lengkap dengan relasi buku (untuk gambar) dan user
         $feedbacks = Feedback::with(['book', 'user'])
                             ->latest()
                             ->take(3)
                             ->get();
 
-        // 3. Kirim kedua variabel ke view dashboard
         return view('dashboard', compact('recommendedBooks', 'feedbacks'));
     }
 
+    /**
+     * Tampilan Pinjaman Saya (User)
+     */
     public function index()
     {
         $loans = Loan::with(['book'])
@@ -38,6 +38,9 @@ class LoanController extends Controller
         return view('loans.index', compact('loans'));
     }
 
+    /**
+     * Tampilan Monitoring (Admin)
+     */
     public function allLoans(Request $request)
     {
         $query = Loan::with(['user', 'book']);
@@ -82,6 +85,10 @@ class LoanController extends Controller
         return redirect()->route('pinjaman')->with('success', "Buku berhasil dipinjam! Stok berkurang.");
     }
 
+    /**
+     * PROSES KEMBALIKAN BUKU
+     * Sudah diperbaiki untuk memastikan ulasan tersimpan di tabel LOANS dan FEEDBACKS
+     */
     public function returnBook(Request $request, $id)
     {
         $request->validate([
@@ -91,23 +98,26 @@ class LoanController extends Controller
 
         $loan = Loan::findOrFail($id);
 
-        $loan->update([
-            'status' => 'kembali', 
-            'tanggal_kembali' => now(),
-            'ulasan' => $request->ulasan, 
-            'rating' => $request->rating,
-        ]);
+        // 1. Update di tabel LOANS (Agar muncul di halaman Pinjaman Saya)
+        // Kita gunakan save() agar lebih aman dan memastikan variabel terisi
+        $loan->status = 'kembali';
+        $loan->denda = 0;
+        $loan->ulasan = $request->ulasan; 
+        $loan->rating = $request->rating; 
+        $loan->save(); 
 
+        // 2. Kembalikan stok buku
         $loan->book->increment('stok');
 
+        // 3. Simpan ke tabel FEEDBACK (Agar muncul di Dashboard/Suara Peminjam)
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
             'rating'   => $request->rating,
-            'pesan'    => $request->ulasan,
+            'pesan'    => $request->ulasan, // Kolom di tabel Feedback biasanya bernama 'pesan'
             'kategori' => 'Buku', 
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Buku dikembalikan!');
+        return redirect()->route('pinjaman')->with('success', 'Buku dikembalikan dan ulasan disimpan!');
     }
 }

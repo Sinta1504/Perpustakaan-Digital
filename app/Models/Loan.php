@@ -15,13 +15,12 @@ class Loan extends Model
         'nama_peminjam',   
         'nomor_identitas', 
         'tanggal_pinjam', 
-        'tanggal_tenggat', // Tambahkan ini agar bisa menyimpan tanggal tenggat
-        'tanggal_kembali', 
+        'tanggal_kembali', // Digunakan di Controller sebagai tanggal tenggat
         'status', 
-        'denda',           // Tambahkan ini agar bisa menyimpan nominal denda
-        'rating',          
-        'ulasan',          
-        'admin_reply'      // Kolom untuk balasan admin
+        'denda',           
+        'rating',          // Pastikan ini ada agar ulasan tersimpan
+        'ulasan',          // Pastikan ini ada agar ulasan tersimpan
+        'admin_reply'      
     ];
 
     /**
@@ -29,8 +28,7 @@ class Loan extends Model
      */
     protected $casts = [
         'tanggal_pinjam'  => 'date',
-        'tanggal_tenggat' => 'date',
-        'tanggal_kembali' => 'datetime',
+        'tanggal_kembali' => 'date', // Di-cast sebagai date agar mudah dimanipulasi
     ];
 
     /**
