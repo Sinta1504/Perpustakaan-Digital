@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mx-auto px-6 py-12">
-    {{-- BAGIAN: Rekomendasi Buku (Dashboard) --}}
+    {{-- BAGIAN: Rekomendasi Buku (Hanya muncul di Dashboard) --}}
     @if(request()->routeIs('dashboard'))
         <div class="mb-12">
             <div class="flex justify-between items-center mb-6">
@@ -46,7 +46,7 @@
         <hr class="border-slate-100 mb-12">
     @endif
 
-    {{-- HEADER --}}
+    {{-- HEADER HALAMAN PINJAMAN --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
             <h2 class="text-3xl font-black text-slate-900 uppercase italic">Daftar Pinjaman</h2>
@@ -71,52 +71,36 @@
                 <thead>
                     <tr class="bg-slate-50/50 border-b border-slate-100">
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Buku</th>
-                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Peminjam</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Tenggat</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Respon/Ulasan</th>
+                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Respon / Ulasan</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($loans as $loan)
                     <tr class="hover:bg-slate-50/30 transition-colors">
-                        
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-16 h-20 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden shadow-sm border border-slate-200">
                                     @php
                                         $coverPath = $loan->book->cover ?? '';
                                         $urlGambar = \Illuminate\Support\Str::startsWith($coverPath, 'http') 
-                                                     ? $coverPath 
-                                                     : asset('storage/' . $coverPath);
+                                                   ? $coverPath 
+                                                   : asset('storage/' . $coverPath);
                                     @endphp
-
-                                    @if($coverPath)
-                                        <img src="{{ $urlGambar }}" 
-                                             alt="{{ $loan->book->judul ?? 'Buku' }}" 
-                                             class="w-full h-full object-cover"
-                                             onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
-                                    @else
-                                        <div class="w-full h-full flex items-center justify-center bg-slate-200">
-                                            <span class="text-[10px] text-slate-400 font-bold uppercase italic">No Cover</span>
-                                        </div>
-                                    @endif
+                                    <img src="{{ $coverPath ? $urlGambar : 'https://placehold.co/400x600?text=No+Cover' }}" 
+                                         alt="{{ $loan->book->judul ?? 'Buku' }}" 
+                                         class="w-full h-full object-cover"
+                                         onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
                                 </div>
-
                                 <div>
-                                    <h5 class="font-black text-slate-900 uppercase italic text-sm leading-tight">
-                                        {{ $loan->book->judul ?? 'Buku Dihapus' }}
-                                    </h5>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                                        {{ $loan->book->penulis ?? 'Unknown Author' }}
-                                    </p>
+                                    <h5 class="font-black text-slate-900 uppercase italic text-sm leading-tight">{{ $loan->book->judul ?? 'Buku Dihapus' }}</h5>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{{ $loan->book->penulis ?? 'Unknown Author' }}</p>
                                 </div>
                             </div>
                         </td>
 
-                        <td class="px-8 py-5 text-sm font-bold text-slate-700">{{ $loan->user->name ?? 'User' }}</td>
-                        
                         <td class="px-8 py-5">
                             <div class="text-sm font-black text-slate-600 uppercase">
                                 {{ \Carbon\Carbon::parse($loan->tanggal_kembali)->format('d M Y') }}
@@ -126,28 +110,28 @@
 
                         <td class="px-8 py-5">
                             @if($loan->status === 'dipinjam')
-                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit">Sedang Dipinjam</span>
+                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit shadow-sm shadow-amber-50">Sedang Dipinjam</span>
                             @else
-                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">Sudah Kembali</span>
+                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit shadow-sm shadow-green-50">Sudah Kembali</span>
                                 @if($loan->denda > 0)
-                                    <p class="text-[9px] font-bold text-orange-600 mt-1">Denda Dibayar: Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
+                                    <p class="text-[9px] font-bold text-orange-600 mt-1 uppercase italic">Denda: Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
                                 @endif
                             @endif
                         </td>
 
-                        {{-- BAGIAN YANG DIPERBAIKI: Menampilkan Ulasan & Rating --}}
+                        {{-- KOLOM ULASAN: Menampilkan data jika ulasan sudah diisi --}}
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] font-black text-blue-600 uppercase">
-                                        {{ $loan->rating }}/5 ⭐
+                                    <span class="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
+                                        {{ $loan->rating }}/5 <i class="fas fa-star text-[8px]"></i>
                                     </span>
-                                    <p class="text-xs text-slate-500 italic line-clamp-1 mt-0.5">
+                                    <p class="text-xs text-slate-500 italic line-clamp-2 mt-0.5 max-w-[200px]">
                                         "{{ $loan->ulasan }}"
                                     </p>
                                 </div>
                             @else
-                                <span class="text-slate-400 italic text-[10px]">Belum ada ulasan</span>
+                                <span class="text-slate-400 italic text-[10px] tracking-tight">Belum ada ulasan</span>
                             @endif
                         </td>
 
@@ -155,18 +139,21 @@
                             @if($loan->status === 'dipinjam')
                                 <button type="button" 
                                     onclick="openReturnModal('{{ $loan->id }}', '{{ addslashes($loan->book->judul ?? 'Buku') }}')"
-                                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all shadow-lg shadow-slate-100 uppercase tracking-widest flex items-center gap-2 mx-auto">
+                                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all shadow-lg shadow-slate-100 uppercase tracking-widest flex items-center gap-2 mx-auto active:scale-95">
                                     <i class="fas fa-undo-alt"></i> Kembalikan
                                 </button>
                             @else
-                                <span class="text-green-500 bg-green-50 p-2 rounded-full text-xs shadow-inner inline-block"><i class="fas fa-check"></i></span>
+                                <div class="w-8 h-8 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-20 text-center font-bold text-slate-400 uppercase tracking-widest text-xs">
-                            Belum ada riwayat peminjaman buku.
+                        <td colspan="5" class="py-24 text-center">
+                            <i class="fas fa-book-open text-slate-100 text-5xl mb-4 block"></i>
+                            <span class="font-bold text-slate-300 uppercase tracking-widest text-xs italic">Belum ada riwayat peminjaman buku.</span>
                         </td>
                     </tr>
                     @endforelse
@@ -176,20 +163,23 @@
     </div>
 </div>
 
-{{-- MODAL --}}
+{{-- MODAL PENGEMBALIAN BUKU --}}
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl transform transition-all">
         <form id="returnForm" method="POST">
             @csrf
             <div class="p-8">
-                <div class="text-center mb-6">
-                    <h3 class="text-xl font-black text-slate-900 uppercase italic" id="modalBookTitle">Kembalikan Buku</h3>
-                    <p class="text-slate-500 text-sm font-medium">Berikan ulasan Anda untuk menyelesaikan.</p>
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                        <i class="fas fa-paper-plane text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-slate-900 uppercase italic leading-tight" id="modalBookTitle">Kembalikan Buku</h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Bantu kami berkembang dengan ulasan jujur Anda.</p>
                 </div>
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <div>
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Rating</label>
-                        <select name="rating" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">Seberapa puas Anda?</label>
+                        <select name="rating" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none cursor-pointer">
                             <option value="5">⭐⭐⭐⭐⭐ (Sangat Puas)</option>
                             <option value="4">⭐⭐⭐⭐ (Puas)</option>
                             <option value="3">⭐⭐⭐ (Biasa)</option>
@@ -198,14 +188,14 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Ulasan</label>
-                        <textarea name="ulasan" required rows="3" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500" placeholder="Apa pendapatmu tentang buku ini?"></textarea>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">Tulis Ulasan Singkat</label>
+                        <textarea name="ulasan" required rows="4" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-300" placeholder="Contoh: Bukunya sangat bermanfaat dan mudah dipahami!"></textarea>
                     </div>
                 </div>
             </div>
-            <div class="flex border-t border-slate-50">
-                <button type="button" onclick="closeReturnModal()" class="flex-1 px-6 py-5 text-xs font-black uppercase text-slate-400 hover:bg-slate-50 transition-colors">Batal</button>
-                <button type="submit" class="flex-1 px-6 py-5 bg-blue-600 text-white text-xs font-black uppercase hover:bg-blue-700 transition-colors">Kirim & Selesai</button>
+            <div class="flex border-t border-slate-50 bg-slate-50/50">
+                <button type="button" onclick="closeReturnModal()" class="flex-1 px-6 py-6 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors tracking-widest">Batal</button>
+                <button type="submit" class="flex-1 px-6 py-6 bg-blue-600 text-white text-[10px] font-black uppercase hover:bg-blue-700 transition-all tracking-widest shadow-lg shadow-blue-100">Kirim & Kembalikan</button>
             </div>
         </form>
     </div>
@@ -213,15 +203,22 @@
 
 <script>
     function openReturnModal(id, title) {
+        // Pastikan URL action benar sesuai dengan route Laravel Anda
         document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
         document.getElementById('modalBookTitle').innerText = title;
-        document.getElementById('returnModal').classList.remove('hidden');
+        
+        const modal = document.getElementById('returnModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
     
     function closeReturnModal() {
-        document.getElementById('returnModal').classList.add('hidden');
+        const modal = document.getElementById('returnModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 
+    // Menutup modal jika klik di luar area modal
     window.onclick = function(event) {
         let modal = document.getElementById('returnModal');
         if (event.target == modal) {
