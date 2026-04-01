@@ -4,7 +4,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\FeedbackController;
-use App\Http\Controllers\PinjamanController; // Tambahkan ini jika belum ada
+use App\Http\Controllers\PinjamanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,9 +18,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+// Route Katalog & Detail Buku
 Route::get('/katalog', [BookController::class, 'index'])->name('books.index');
 Route::get('/katalog-alias', [BookController::class, 'index'])->name('katalog'); 
-Route::get('/katalog/{book}', [BookController::class, 'show'])->name('books.show');
+// PERBAIKAN: Menggunakan {id} agar sesuai dengan fungsi show($id) di Controller
+Route::get('/katalog/{id}', [BookController::class, 'show'])->name('books.show');
 
 
 // --- 2. AUTHENTICATED ROUTES ---
@@ -28,7 +30,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     /**
      * DASHBOARD UTAMA
-     * Menggunakan LoanController@dashboard sesuai struktur file kamu sebelumnya
      */
     Route::get('/dashboard', [LoanController::class, 'dashboard'])->name('dashboard');
     Route::get('/home', [LoanController::class, 'dashboard'])->name('home');
@@ -47,7 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pinjam/{id}', [LoanController::class, 'create'])->name('loans.create');
     Route::post('/pinjam', [LoanController::class, 'store'])->name('loans.store');
     
-    // PERBAIKAN: Arahkan rute kembalikan ke PinjamanController jika logikanya ada di sana
+    // Proses Kembalikan Buku
     Route::post('/pinjaman/kembalikan/{id}', [PinjamanController::class, 'kembalikan'])->name('pinjaman.kembalikan');
     
     // Feedback Store
@@ -74,7 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/feedback/{id}/reply', [FeedbackController::class, 'reply'])->name('admin.feedback.reply');
         Route::delete('/admin/feedback/{id}', [FeedbackController::class, 'destroy'])->name('admin.feedback.destroy');
         
-        // CRUD INVENTORI
+        // CRUD INVENTORI (Resource otomatis menyediakan route store, edit, update, destroy)
         Route::resource('books', BookController::class)->except(['index', 'show']);
         Route::get('/buku/tambah', [BookController::class, 'create'])->name('books.create.manual');
     });

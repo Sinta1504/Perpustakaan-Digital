@@ -119,16 +119,31 @@
                             @endif
                         </td>
 
-                        {{-- KOLOM ULASAN: Menampilkan data jika ulasan sudah diisi --}}
+                        {{-- KOLOM ULASAN & BALASAN ADMIN --}}
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
-                                        {{ $loan->rating }}/5 <i class="fas fa-star text-[8px]"></i>
-                                    </span>
-                                    <p class="text-xs text-slate-500 italic line-clamp-2 mt-0.5 max-w-[200px]">
-                                        "{{ $loan->ulasan }}"
-                                    </p>
+                                <div class="flex flex-col gap-2">
+                                    {{-- Bagian Ulasan User --}}
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
+                                            {{ $loan->rating }}/5 <i class="fas fa-star text-[8px]"></i>
+                                        </span>
+                                        <p class="text-xs text-slate-500 italic line-clamp-2 mt-0.5 max-w-[220px]">
+                                            "{{ $loan->ulasan }}"
+                                        </p>
+                                    </div>
+
+                                    {{-- BAGIAN BARU: Balasan dari Admin --}}
+                                    @if($loan->balasan_admin)
+                                        <div class="bg-blue-50/50 border-l-2 border-blue-400 p-2 rounded-r-lg mt-1">
+                                            <span class="text-[9px] font-black text-blue-700 uppercase tracking-tighter block mb-0.5">
+                                                <i class="fas fa-reply fa-flip-horizontal mr-1"></i> Respon Admin:
+                                            </span>
+                                            <p class="text-[11px] text-slate-600 font-medium leading-relaxed italic">
+                                                {{ $loan->balasan_admin }}
+                                            </p>
+                                        </div>
+                                    @endif
                                 </div>
                             @else
                                 <span class="text-slate-400 italic text-[10px] tracking-tight">Belum ada ulasan</span>
@@ -203,7 +218,6 @@
 
 <script>
     function openReturnModal(id, title) {
-        // Pastikan URL action benar sesuai dengan route Laravel Anda
         document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
         document.getElementById('modalBookTitle').innerText = title;
         
@@ -218,7 +232,6 @@
         modal.classList.remove('flex');
     }
 
-    // Menutup modal jika klik di luar area modal
     window.onclick = function(event) {
         let modal = document.getElementById('returnModal');
         if (event.target == modal) {

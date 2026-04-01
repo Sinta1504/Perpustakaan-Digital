@@ -41,8 +41,8 @@ class BookController extends Controller
         // 5. Suara Peminjam
         try {
             $allReviews = Loan::with(['user', 'book'])
-                ->where('status', 'dikembalikan')
-                ->whereNotNull('review')
+                ->where('status', 'kembali') // Sesuaikan dengan status di database kamu
+                ->whereNotNull('ulasan')
                 ->latest()
                 ->get();
         } catch (\Exception $e) {
@@ -92,13 +92,25 @@ class BookController extends Controller
         return view('books.index', compact('books'));
     }
 
+    /**
+     * Menampilkan DETAIL BUKU (Halaman yang tadinya Error)
+     */
+    public function show($id)
+    {
+        // Mengambil data buku berdasarkan ID
+        $book = Book::findOrFail($id);
+
+        // Mengarahkan ke view detail buku
+        return view('books.show', compact('book'));
+    }
+
     public function create()
     {
         return view('books.create');
     }
 
     /**
-     * Fitur Simpan Buku (Perbaikan Path Storage)
+     * Fitur Simpan Buku
      */
     public function store(Request $request)
     {
@@ -110,23 +122,22 @@ class BookController extends Controller
             'stok' => 'required|numeric|min:0',
         ]);
 
+        $path = null;
         if ($request->hasFile('cover')) {
             $file = $request->file('cover');
             $namaFile = time() . '_' . $file->getClientOriginalName();
-            
-            // Simpan ke storage/app/public/covers menggunakan disk 'public'
             $path = $file->storeAs('covers', $namaFile, 'public');
-
-            Book::create([
-                'judul' => $request->judul,
-                'penulis' => $request->penulis,
-                'sinopsis' => $request->sinopsis,
-                'kategori' => $request->kategori,
-                'stok' => $request->stok,
-                'cover' => $path, // Simpan 'covers/nama.jpg'
-                'status' => 'baik', 
-            ]);
         }
+
+        Book::create([
+            'judul' => $request->judul,
+            'penulis' => $request->penulis,
+            'sinopsis' => $request->sinopsis, // Pastikan input name di form adalah 'sinopsis'
+            'kategori' => $request->kategori,
+            'stok' => $request->stok,
+            'cover' => $path, 
+            'status' => 'baik', 
+        ]);
 
         return redirect()->route('admin.inventory')->with('success', 'Buku berhasil ditambahkan!');
     }
@@ -137,7 +148,7 @@ class BookController extends Controller
     }
 
     /**
-     * Fitur Update Buku (Perbaikan Path Storage)
+     * Fitur Update Buku
      */
     public function update(Request $request, Book $book)
     {

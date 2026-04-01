@@ -17,7 +17,7 @@
         <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full -mr-20 -mt-20"></div>
     </div>
 
-    {{-- 2. Bagian Rekomendasi Buku --}}
+    {{-- 2. Bagian Judul Rekomendasi --}}
     <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
             <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">
@@ -34,42 +34,55 @@
         </a>
     </div>
 
-    {{-- 3. Grid Kartu Buku --}}
+    {{-- 3. Grid Kartu Buku (Tampilan Baru Versi Katalog) --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         @foreach($recommendedBooks as $book)
-        <div class="group bg-white rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-50 transition-all duration-300 hover:-translate-y-3">
+        <div class="bg-white rounded-[2.5rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border border-slate-50 group">
             
-            {{-- Kontainer Gambar --}}
-            <div class="relative overflow-hidden rounded-[2rem] mb-6 aspect-[3/4] bg-slate-100 shadow-inner">
-                
+            {{-- Visual Buku --}}
+            <div class="relative mb-6 overflow-hidden rounded-[2rem] aspect-[3/4] bg-slate-100 flex items-center justify-center">
                 @php
-                    $imageSrc = $book->cover_url ?? ( $book->cover ? asset('storage/'.$book->cover) : null );
+                    $imageSrc = Str::startsWith($book->cover, 'http') ? $book->cover : asset('storage/' . $book->cover);
                 @endphp
-
+                
                 <img src="{{ $imageSrc }}" 
-                     alt="{{ $book->judul }}"
-                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     alt="{{ $book->judul }}" 
+                     class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                      onerror="this.src='https://placehold.co/400x600?text={{ urlencode($book->judul) }}'">
                 
-                {{-- Overlay & Tombol Cepat saat Hover --}}
-                <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                    <a href="{{ route('books.show', $book->id) }}" class="bg-white text-slate-900 px-6 py-3 rounded-xl font-extrabold text-xs uppercase tracking-widest shadow-xl transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
-                        Pinjam Sekarang
-                    </a>
-                </div>
+                {{-- Badge Kategori --}}
+                <span class="absolute top-4 left-4 bg-blue-600 text-white px-4 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg">
+                    {{ $book->kategori }}
+                </span>
             </div>
 
-            {{-- Informasi Buku --}}
+            {{-- Info Buku --}}
             <div class="px-2">
-                <h4 class="font-black text-slate-900 uppercase italic tracking-tighter leading-tight mb-1 truncate group-hover:text-blue-600 transition-colors" title="{{ $book->judul }}">
+                <p class="text-blue-400 font-black text-[9px] uppercase tracking-[0.2em] mb-1">Informasi Buku</p>
+                <h3 class="text-xl font-black text-slate-900 uppercase italic leading-tight mb-1 truncate" title="{{ $book->judul }}">
                     {{ $book->judul }}
-                </h4>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-[2px] bg-blue-500"></span>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">
-                        {{ $book->penulis }}
-                    </p>
+                </h3>
+                <p class="text-slate-400 font-bold text-[11px] uppercase tracking-widest mb-6">
+                    Karya: <span class="text-slate-600">{{ $book->penulis }}</span>
+                </p>
+
+                {{-- Info Stok & ID (Mini Version) --}}
+                <div class="flex gap-2 mb-6">
+                    <div class="bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex-1 text-center">
+                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Stok</p>
+                        <p class="text-[10px] font-black text-green-500">{{ $book->stok }} Tersedia</p>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex-1 text-center">
+                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">ID</p>
+                        <p class="text-[10px] font-black text-slate-800">#BK-{{ $book->id }}</p>
+                    </div>
                 </div>
+
+                {{-- Tombol Pinjam --}}
+                <a href="{{ route('loans.create', $book->id) }}" 
+                   class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-[0_15px_30px_rgba(37,99,235,0.2)] transition transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]">
+                    <span>📖</span> Pinjam Sekarang
+                </a>
             </div>
         </div>
         @endforeach
@@ -81,7 +94,7 @@
     </div>
     @endif
 
-    {{-- --- BAGIAN BARU: SUARA PEMINJAM --- --}}
+    {{-- 4. Bagian Suara Peminjam --}}
     <div class="mt-24 mb-10">
         <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">
             Suara Peminjam 💬
