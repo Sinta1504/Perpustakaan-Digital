@@ -2,13 +2,13 @@
 
 @section('content')
 <div class="container mx-auto px-6 py-12">
-    {{-- BAGIAN: Rekomendasi Buku (Hanya muncul di Dashboard) --}}
-    @if(request()->routeIs('dashboard'))
+    {{-- BAGIAN: Rekomendasi Buku --}}
+    @if(request()->routeIs('dashboard') || request()->routeIs('loans.index'))
         <div class="mb-12">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-2xl font-black text-slate-900 uppercase italic">Rekomendasi Buku</h2>
-                    <p class="text-slate-500 text-sm font-medium">Buku-buku pilihan yang paling banyak dibaca</p>
+                    <h2 class="text-2xl font-black text-slate-900 uppercase italic">Rekomendasi & Suara Peminjam</h2>
+                    <p class="text-slate-500 text-sm font-medium">Buku pilihan dengan ulasan terbaik dari pembaca</p>
                 </div>
                 <a href="{{ route('katalog') }}" class="text-slate-400 hover:text-blue-600 font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
                     Lihat Semua Katalog <i class="fas fa-arrow-right"></i>
@@ -49,7 +49,7 @@
     {{-- HEADER HALAMAN PINJAMAN --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-            <h2 class="text-3xl font-black text-slate-900 uppercase italic">Daftar Pinjaman</h2>
+            <h2 class="text-3xl font-black text-slate-900 uppercase italic">Daftar Pinjaman Saya</h2>
             <p class="text-slate-500 font-medium">Pantau dan kelola koleksi buku digital Anda.</p>
         </div>
         <a href="{{ route('katalog') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[2rem] font-black shadow-xl shadow-blue-100 transition-all flex items-center gap-3 uppercase tracking-widest text-xs">
@@ -90,9 +90,7 @@
                                                    : asset('storage/' . $coverPath);
                                     @endphp
                                     <img src="{{ $coverPath ? $urlGambar : 'https://placehold.co/400x600?text=No+Cover' }}" 
-                                         alt="{{ $loan->book->judul ?? 'Buku' }}" 
-                                         class="w-full h-full object-cover"
-                                         onerror="this.src='https://placehold.co/400x600?text=No+Cover'">
+                                         class="w-full h-full object-cover">
                                 </div>
                                 <div>
                                     <h5 class="font-black text-slate-900 uppercase italic text-sm leading-tight">{{ $loan->book->judul ?? 'Buku Dihapus' }}</h5>
@@ -110,30 +108,28 @@
 
                         <td class="px-8 py-5">
                             @if($loan->status === 'dipinjam')
-                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit shadow-sm shadow-amber-50">Sedang Dipinjam</span>
+                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit">Sedang Dipinjam</span>
                             @else
-                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit shadow-sm shadow-green-50">Sudah Kembali</span>
-                                @if($loan->denda > 0)
-                                    <p class="text-[9px] font-bold text-orange-600 mt-1 uppercase italic">Denda: Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
-                                @endif
+                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">Sudah Kembali</span>
                             @endif
                         </td>
 
-                        {{-- KOLOM ULASAN & BALASAN ADMIN --}}
+                        {{-- KOLOM ULASAN & RESPON ADMIN (BAGIAN YANG DIPERBAIKI) --}}
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
                                 <div class="flex flex-col gap-2">
-                                    {{-- Bagian Ulasan User --}}
                                     <div class="flex flex-col">
                                         <span class="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
-                                            {{ $loan->rating }}/5 <i class="fas fa-star text-[8px]"></i>
+                                            @for($i=1; $i<=5; $i++)
+                                                <i class="fas fa-star {{ $i <= $loan->rating ? 'text-blue-600' : 'text-slate-200' }} text-[8px]"></i>
+                                            @endfor
+                                            ({{ $loan->rating ?? 0 }}/5)
                                         </span>
-                                        <p class="text-xs text-slate-500 italic line-clamp-2 mt-0.5 max-w-[220px]">
+                                        <p class="text-xs text-slate-600 italic mt-0.5 max-w-[220px]">
                                             "{{ $loan->ulasan }}"
                                         </p>
                                     </div>
 
-                                    {{-- BAGIAN BARU: Balasan dari Admin --}}
                                     @if($loan->balasan_admin)
                                         <div class="bg-blue-50/50 border-l-2 border-blue-400 p-2 rounded-r-lg mt-1">
                                             <span class="text-[9px] font-black text-blue-700 uppercase tracking-tighter block mb-0.5">
@@ -146,7 +142,7 @@
                                     @endif
                                 </div>
                             @else
-                                <span class="text-slate-400 italic text-[10px] tracking-tight">Belum ada ulasan</span>
+                                <span class="text-slate-300 italic text-[10px]">Belum ada ulasan</span>
                             @endif
                         </td>
 
@@ -154,7 +150,7 @@
                             @if($loan->status === 'dipinjam')
                                 <button type="button" 
                                     onclick="openReturnModal('{{ $loan->id }}', '{{ addslashes($loan->book->judul ?? 'Buku') }}')"
-                                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all shadow-lg shadow-slate-100 uppercase tracking-widest flex items-center gap-2 mx-auto active:scale-95">
+                                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all shadow-lg uppercase tracking-widest flex items-center gap-2 mx-auto active:scale-95">
                                     <i class="fas fa-undo-alt"></i> Kembalikan
                                 </button>
                             @else
@@ -218,6 +214,7 @@
 
 <script>
     function openReturnModal(id, title) {
+        // Sesuaikan URL ini dengan route pengembalian Anda
         document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
         document.getElementById('modalBookTitle').innerText = title;
         
@@ -230,13 +227,6 @@
         const modal = document.getElementById('returnModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-    }
-
-    window.onclick = function(event) {
-        let modal = document.getElementById('returnModal');
-        if (event.target == modal) {
-            closeReturnModal();
-        }
     }
 </script>
 @endsection

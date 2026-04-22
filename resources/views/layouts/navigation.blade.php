@@ -13,7 +13,8 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if(Auth::user()->role === 'admin')
+                    {{-- CEK ROLE ADMIN --}}
+                    @if(Auth::user()->role == 'admin')
                         <x-nav-link :href="route('admin.loans')" :active="request()->routeIs('admin.loans')">
                             📋 Monitoring Pinjaman
                         </x-nav-link>
@@ -23,15 +24,24 @@
                         <x-nav-link :href="route('admin.inventory')" :active="request()->routeIs('admin.inventory')">
                             📦 Inventori Buku
                         </x-nav-link>
-                        <x-nav-link :href="route('admin.feedback.index')" :active="request()->routeIs('admin.feedback.index')">
-                            💬 Suara Peminjam
+                        
+                        {{-- MENU KONFIGURASI UNTUK ADMIN --}}
+                        <x-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
+                            ⚙️ Konfigurasi Kontak
                         </x-nav-link>
+
                     @else
+                        {{-- MENU UNTUK USER BIASA --}}
                         <x-nav-link :href="route('pinjaman')" :active="request()->routeIs('pinjaman')">
                             📖 Pinjaman Saya
                         </x-nav-link>
                         <x-nav-link :href="route('katalog')" :active="request()->routeIs('katalog')">
                             📚 Katalog Buku
+                        </x-nav-link>
+                        
+                        {{-- MENU HUBUNGI KAMI UNTUK USER --}}
+                        <x-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
+                            🎧 Hubungi Kami
                         </x-nav-link>
                     @endif
                 </div>
@@ -88,35 +98,13 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
             
-            @if(Auth::user()->role === 'admin')
-                <x-responsive-nav-link :href="route('admin.loans')" :active="request()->routeIs('admin.loans')">📋 Monitoring Pinjaman</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">👤 Layanan Pengguna</x-responsive-nav-link>
+            @if(Auth::user()->role == 'admin')
+                <x-responsive-nav-link :href="route('admin.loans')">📋 Monitoring Pinjaman</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">⚙️ Konfigurasi Kontak</x-responsive-nav-link>
             @else
-                <x-responsive-nav-link :href="route('pinjaman')" :active="request()->routeIs('pinjaman')">📖 Pinjaman Saya</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('katalog')" :active="request()->routeIs('katalog')">📚 Katalog Buku</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('pinjaman')">📖 Pinjaman Saya</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">🎧 Hubungi Kami</x-responsive-nav-link>
             @endif
-        </div>
-
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
         </div>
     </div>
 </nav>

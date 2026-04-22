@@ -12,7 +12,6 @@ class Book extends Model
 
     /**
      * Kolom yang dapat diisi secara massal (Mass Assignment).
-     * Saya telah menambahkan 'cover_url' dan 'status' agar sinkron dengan Controller.
      */
     protected $fillable = [
         'judul', 
@@ -20,15 +19,15 @@ class Book extends Model
         'kategori', 
         'stok', 
         'cover',      // Untuk upload manual
-        'cover_url',  // UNTUK GAMBAR OTOMATIS (PENTING!)
-        'status',     // UNTUK STATISTIK BUKU RUSAK (PENTING!)
+        'cover_url',  // Untuk gambar otomatis
+        'status',     // Untuk statistik buku (Tersedia/Rusak/Hilang)
         'deskripsi'
     ];
 
     /**
      * Relasi ke model Loan (Peminjaman).
      * Satu buku bisa memiliki banyak catatan peminjaman.
-     * Ini digunakan untuk menghitung "Buku Terpopuler" di Inventori.
+     * Digunakan untuk menghitung "Buku Terpopuler" menggunakan withCount('loans').
      */
     public function loans(): HasMany
     {

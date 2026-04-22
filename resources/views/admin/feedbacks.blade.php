@@ -11,6 +11,10 @@
                 <p class="text-slate-500 font-medium text-sm mt-1">Pantau seluruh ulasan dan masukan koleksi buku secara global.</p>
             </div>
         </div>
+        {{-- FIX: Mengubah $reviews menjadi $feedbacks agar tidak error --}}
+        <div class="bg-slate-100 px-6 py-3 rounded-2xl border border-slate-200">
+            <span class="text-slate-600 font-black text-xs uppercase italic">Total: {{ $feedbacks->count() }} Ulasan</span>
+        </div>
     </div>
 
     {{-- 2. DAFTAR ULASAN --}}
@@ -21,11 +25,10 @@
                 <div class="flex flex-col lg:flex-row justify-between gap-6">
                     <div class="flex flex-col md:flex-row gap-8 flex-1">
                         
-                        {{-- TAMPILAN BUKU (SAMA DENGAN KATALOG) --}}
+                        {{-- TAMPILAN BUKU --}}
                         <div class="flex gap-4 min-w-[250px]">
                             <div class="relative w-20 h-28 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-md border border-slate-200 flex items-center justify-center">
                                 @if($item->book)
-                                    {{-- MENGGUNAKAN $item->book->cover (Sesuai Katalog) --}}
                                     <img src="{{ asset('storage/' . $item->book->cover) }}" 
                                          alt="{{ $item->book->judul }}" 
                                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -68,7 +71,7 @@
                     {{-- STATUS --}}
                     <div class="flex flex-row lg:flex-col items-center lg:items-end justify-between gap-4">
                         <p class="text-[10px] text-slate-400 font-bold uppercase bg-slate-50 px-3 py-1 rounded-full">
-                            {{ $item->created_at ? $item->created_at->format('d M Y') : '27 Mar 2026' }}
+                            {{ $item->created_at ? $item->created_at->format('d M Y') : '-' }}
                         </p>
                         <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase italic tracking-wider {{ $item->admin_reply ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-orange-50 text-orange-600 border border-orange-100 animate-pulse' }}">
                             {{ $item->admin_reply ? '✅ Terjawab' : '⏳ Pending' }}
@@ -82,7 +85,7 @@
                         Ulasan Peminjam
                     </span>
                     <p class="text-slate-600 italic text-sm font-medium">
-                        "{{ $item->pesan ?? $item->message }}"
+                        "{{ $item->pesan }}"
                     </p>
                     
                     @if($item->admin_reply)
@@ -95,7 +98,7 @@
 
                 {{-- AKSI --}}
                 <div class="mt-8 flex items-center justify-end gap-3">
-                    <button onclick="openReplyModal({{ $item->id }})" 
+                    <button onclick="openReplyModal({{ $item->id }}, '{{ addslashes($item->admin_reply) }}')" 
                             class="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase italic tracking-widest hover:bg-blue-600 transition-all active:scale-95">
                         {{ $item->admin_reply ? 'Ubah Balasan' : 'Balas Sekarang' }}
                     </button>
@@ -110,19 +113,19 @@
             </div>
         @empty
             <div class="bg-slate-50 rounded-[3rem] p-24 text-center border-4 border-dashed border-slate-200">
-                <div class="text-6xl mb-6 opacity-20 italic font-black text-slate-400 uppercase tracking-tighter italic">Belum Ada Ulasan.</div>
+                <div class="text-6xl mb-6 opacity-20 italic font-black text-slate-400 uppercase tracking-tighter">Belum Ada Ulasan.</div>
             </div>
         @endforelse
     </div>
 </div>
 
 {{-- MODAL --}}
-<div id="replyModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-[2.5rem] max-w-lg w-full p-10 shadow-2xl border border-slate-100">
+<div id="replyModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-[2.5rem] max-w-lg w-full p-10 shadow-2xl border border-slate-100 transform transition-transform duration-300">
         <h3 class="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-8">Balas Ulasan</h3>
         <form id="replyForm" method="POST">
             @csrf
-            <textarea name="reply" rows="5" class="w-full rounded-[1.5rem] border-slate-100 bg-slate-50 p-6 mb-6 text-sm font-medium focus:ring-4 focus:ring-blue-50 outline-none" placeholder="Tulis balasan..." required></textarea>
+            <textarea id="replyTextarea" name="reply" rows="5" class="w-full rounded-[1.5rem] border-slate-100 bg-slate-50 p-6 mb-6 text-sm font-medium focus:ring-4 focus:ring-blue-50 outline-none" placeholder="Tulis balasan..." required></textarea>
             <div class="flex gap-4">
                 <button type="button" onclick="closeReplyModal()" class="flex-1 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Batal</button>
                 <button type="submit" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-100">Simpan Balasan</button>
@@ -132,10 +135,29 @@
 </div>
 
 <script>
-    function openReplyModal(id) {
-        document.getElementById('replyForm').action = "/admin/feedback/" + id + "/reply";
+    function openReplyModal(id, existingReply = '') {
+        const form = document.getElementById('replyForm');
+        const textarea = document.getElementById('replyTextarea');
+        
+        // Sesuaikan route action
+        form.action = "/admin/feedback/" + id + "/reply";
+        
+        // Isi textarea jika sudah ada balasan sebelumnya (untuk fitur 'Ubah Balasan')
+        textarea.value = existingReply;
+        
         document.getElementById('replyModal').classList.remove('hidden');
     }
-    function closeReplyModal() { document.getElementById('replyModal').classList.add('hidden'); }
+
+    function closeReplyModal() { 
+        document.getElementById('replyModal').classList.add('hidden'); 
+    }
+
+    // Tutup modal jika klik di luar area modal
+    window.onclick = function(event) {
+        const modal = document.getElementById('replyModal');
+        if (event.target == modal) {
+            closeReplyModal();
+        }
+    }
 </script>
 @endsection

@@ -22,19 +22,10 @@
         }
         [x-cloak] { display: none !important; }
         
-        /* Custom Scrollbar for Sidebar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 10px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
-        /* Animation for flash messages */
         .animate-fade-in-down {
             animation: fadeInDown 0.5s ease-out;
         }
@@ -48,7 +39,6 @@
 
     {{-- 1. SIDEBAR --}}
     <aside class="w-64 h-screen bg-slate-900 text-slate-300 fixed left-0 top-0 flex flex-col shadow-2xl z-50">
-        {{-- Brand --}}
         <div class="p-8">
             <a href="{{ route('welcome') }}" class="flex items-center gap-3 group">
                 <span class="text-3xl transition-transform group-hover:scale-110">📚</span>
@@ -56,7 +46,6 @@
             </a>
         </div>
 
-        {{-- Navigation Menu --}}
         <nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
             <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Menu Utama</p>
             
@@ -75,31 +64,34 @@
                 </a>
                 @endif
 
+                {{-- PERUBAHAN DI SINI: DINAMIS SESUAI ROLE --}}
                 <a href="{{ route('contact.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('contact.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                    <span class="text-lg">📞</span> Hubungi Kami
+                    <span class="text-lg">📞</span> 
+                    <span>
+                        @if(auth()->user()->role === 'admin')
+                            Konfigurasi Kontak
+                        @else
+                            Hubungi Kami
+                        @endif
+                    </span>
                 </a>
 
-                {{-- ADMINISTRATOR SECTION --}}
                 @if(auth()->user()->role === 'admin')
                 <div class="pt-6 mt-6 border-t border-slate-800">
                     <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Administrator</p>
                     
-                    {{-- Inventori - Sekarang Biru --}}
                     <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.inventory') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">📊</span> Inventori
                     </a>
 
-                    {{-- Monitoring - Sekarang Biru --}}
                     <a href="{{ route('admin.loans') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.loans') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">🛡️</span> Monitoring
                     </a>
 
-                    {{-- Layanan Pengguna - Sekarang Biru --}}
                     <a href="{{ route('admin.support') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.support') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">🎧</span> Layanan Pengguna
                     </a>
 
-                    {{-- Suara Peminjam - Sekarang Biru --}}
                     <a href="{{ route('admin.feedback.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all {{ request()->routeIs('admin.feedback.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
                         <span class="text-lg">💬</span> Suara Peminjam
                     </a>
@@ -108,7 +100,6 @@
             @endauth
         </nav>
 
-        {{-- Sidebar Footer (User Info & Logout) --}}
         <div class="p-4 bg-slate-950/50">
             @auth
                 <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-2xl mb-3 border border-white/5">
@@ -126,18 +117,12 @@
                         KELUAR APLIKASI
                     </button>
                 </form>
-            @else
-                <div class="flex flex-col gap-2">
-                    <a href="{{ route('login') }}" class="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-bold hover:bg-blue-700 transition">Masuk</a>
-                </div>
             @endauth
         </div>
     </aside>
 
     {{-- 2. MAIN CONTENT AREA --}}
     <main class="flex-1 ml-64 min-h-screen flex flex-col">
-        
-        {{-- Top Header --}}
         <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 py-4 px-10 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -147,16 +132,12 @@
             </div>
             
             <div class="flex items-center gap-6">
-                {{-- Shortcut Katalog --}}
                 <a href="{{ route('katalog') }}" class="text-[10px] font-black text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">Cari Buku</a>
                 <span class="text-[10px] font-black bg-green-100 text-green-700 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Server Online</span>
             </div>
         </header>
 
-        {{-- Page Content --}}
         <div class="p-10 flex-1">
-            
-            {{-- Flash Messages --}}
             @if(session('success'))
                 <div class="mb-8 p-5 bg-green-50 border border-green-100 text-green-700 rounded-[2rem] font-bold text-sm flex items-center gap-4 shadow-sm animate-fade-in-down">
                     <span class="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center">✓</span>
@@ -171,18 +152,14 @@
                 </div>
             @endif
 
-            {{-- Slot untuk konten halaman --}}
             @yield('content')
-
         </div>
 
-        {{-- Simple Footer --}}
         <footer class="py-6 px-10 border-t border-slate-200 text-center">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
                 &copy; {{ date('Y') }} E-LIB DIGITAL LIBRARY SYSTEM
             </p>
         </footer>
     </main>
-
 </body>
 </html>
