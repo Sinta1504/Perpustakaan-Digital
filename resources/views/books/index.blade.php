@@ -2,8 +2,8 @@
 
 @section('content')
 <div class="container mx-auto px-6 py-12">
-    {{-- 1. Header & Fitur Pencarian --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+    {{-- 1. Header & Fitur Pencarian + Filter --}}
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-6">
         <div>
             <h2 class="text-4xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">
                 📚 Koleksi Pustaka
@@ -11,18 +11,38 @@
             <p class="text-slate-500 font-medium text-sm mt-2">Jelajahi dunia melalui barisan kata dalam buku.</p>
         </div>
         
-        <form action="{{ route('books.index') }}" method="GET" class="relative group">
-            <input type="text" 
-                   name="search" 
-                   value="{{ request('search') }}" 
-                   placeholder="Cari judul atau penulis..." 
-                   class="pl-12 pr-6 py-4 bg-white border border-slate-100 rounded-2xl w-full md:w-80 shadow-sm group-hover:shadow-md transition-all outline-none focus:border-blue-500 font-bold italic text-xs uppercase">
-            
-            <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </button>
+        <form action="{{ route('books.index') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-center">
+            {{-- Filter Kategori --}}
+            <div class="relative w-full md:w-64 group">
+                <select name="kategori" 
+                        onchange="this.form.submit()"
+                        class="appearance-none pl-6 pr-12 py-4 bg-white border border-slate-100 rounded-2xl w-full shadow-sm group-hover:shadow-md transition-all outline-none focus:border-blue-500 font-bold italic text-xs uppercase cursor-pointer text-slate-700">
+                    <option value="">-- Semua Kategori --</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('kategori') == $cat ? 'selected' : '' }}>
+                            {{ strtoupper($cat) }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+
+            {{-- Search Bar --}}
+            <div class="relative group w-full md:w-80">
+                <input type="text" 
+                       name="search" 
+                       value="{{ request('search') }}" 
+                       placeholder="Cari judul atau penulis..." 
+                       class="pl-12 pr-6 py-4 bg-white border border-slate-100 rounded-2xl w-full shadow-sm group-hover:shadow-md transition-all outline-none focus:border-blue-500 font-bold italic text-xs uppercase">
+                
+                <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+            </div>
         </form>
     </div>
 
@@ -111,10 +131,15 @@
         <div class="col-span-full py-20 text-center">
             <div class="text-6xl mb-4">🔍</div>
             <h3 class="text-xl font-black text-slate-900 uppercase italic">Buku tidak ditemukan</h3>
-            <p class="text-slate-500 mt-2">Coba gunakan kata kunci lain seperti nama penulis atau kategori.</p>
-            <a href="{{ route('books.index') }}" class="inline-block mt-6 text-blue-600 font-bold uppercase italic text-xs border-b-2 border-blue-600 pb-1">Kembali ke semua koleksi</a>
+            <p class="text-slate-500 mt-2">Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
+            <a href="{{ route('books.index') }}" class="inline-block mt-6 text-blue-600 font-bold uppercase italic text-xs border-b-2 border-blue-600 pb-1">Reset Filter & Pencarian</a>
         </div>
         @endforelse
+    </div>
+
+    {{-- Pagination (Sangat Penting untuk UX) --}}
+    <div class="mt-16 flex justify-center">
+        {{ $books->links() }}
     </div>
 </div>
 @endsection

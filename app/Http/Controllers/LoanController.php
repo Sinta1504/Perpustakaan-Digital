@@ -8,7 +8,7 @@ use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// --- IMPORT DOMPDF DI SINI ---
+// Menggunakan library DomPDF untuk fitur download e-book
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class LoanController extends Controller
@@ -97,6 +97,7 @@ class LoanController extends Controller
 
     /**
      * PROSES SIMPAN PINJAMAN
+     * Validasi: Satu user hanya boleh meminjam satu judul buku yang sama sekali seumur hidup.
      */
     public function store(Request $request)
     {
@@ -105,21 +106,37 @@ class LoanController extends Controller
             'identitas' => 'required|string|max:50',
         ]);
 
-        $book = Book::findOrFail($request->book_id);
+        $userId = Auth::id();
+        $bookId = $request->book_id;
 
+        // --- VALIDASI INTI ---
+        // Mencari apakah ada data peminjaman (apapun statusnya: dipinjam/kembali)
+        // untuk user ini dengan buku ini.
+        $hasEverBorrowed = Loan::where('user_id', $userId)
+                                ->where('book_id', $bookId)
+                                ->exists();
+
+        if ($hasEverBorrowed) {
+            return redirect()->back()->with('error', 'Anda sudah pernah meminjam buku ini sebelumnya. Kebijakan perpustakaan hanya memperbolehkan meminjam setiap judul buku sebanyak satu kali.');
+        }
+        // --- END VALIDASI ---
+
+        $book = Book::findOrFail($bookId);
         if ($book->stok <= 0) {
-            return redirect()->back()->with('error', 'Maaf, stok buku ini sudah habis!');
+            return redirect()->back()->with('error', 'Maaf, stok buku ini sedang habis!');
         }
 
+        // Proses pembuatan data pinjaman
         Loan::create([
-            'user_id'         => Auth::id(),
-            'book_id'         => $request->book_id,
+            'user_id'         => $userId,
+            'book_id'         => $bookId,
             'tanggal_pinjam'  => now(),
             'tanggal_kembali' => now()->addDays(7),
             'status'          => 'dipinjam',
             'identitas'       => $request->identitas,
         ]);
 
+        // Kurangi stok buku
         $book->decrement('stok');
 
         return redirect()->route('pinjaman')->with('success', "Buku {$book->judul} berhasil dipinjam!");
@@ -149,8 +166,10 @@ class LoanController extends Controller
             'denda'  => 0,
         ]);
 
+        // Tambah stok buku kembali
         $loan->book->increment('stok');
 
+        // Simpan feedback/ulasan
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
@@ -175,11 +194,10 @@ class LoanController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk dokumen ini.');
         }
 
-        // Memasukkan data buku ke dalam view khusus PDF
-        // View ini harus dibuat di resources/views/pdf/ebook_template.blade.php
+        // Render view khusus PDF yang berada di resources/views/pdf/ebook_template.blade.php
         $pdf = Pdf::loadView('pdf.ebook_template', compact('loan'));
 
-        // Download file dengan nama judul buku
+        // Download file dengan format nama: E-Book - Judul Buku.pdf
         return $pdf->download('E-Book - ' . $loan->book->judul . '.pdf');
     }
 }

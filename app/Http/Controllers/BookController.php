@@ -41,7 +41,7 @@ class BookController extends Controller
         // 5. Suara Peminjam
         try {
             $allReviews = Loan::with(['user', 'book'])
-                ->where('status', 'kembali') // Sesuaikan dengan status di database kamu
+                ->where('status', 'kembali') 
                 ->whereNotNull('ulasan')
                 ->latest()
                 ->get();
@@ -72,35 +72,41 @@ class BookController extends Controller
     }
 
     /**
-     * Menampilkan Halaman KATALOG (Dengan Logika Pencarian)
+     * Menampilkan Halaman KATALOG (Dengan Fitur Pencarian & Filter Kategori)
      */
     public function index(Request $request)
     {
         $query = Book::query();
 
-        // Logika Pencarian agar sinkron dengan Search Bar di View
+        // 1. Ambil daftar kategori unik dari tabel books untuk menu dropdown
+        // Ini memastikan kategori yang tampil di filter sesuai dengan isi database
+        $categories = Book::select('kategori')->distinct()->pluck('kategori');
+
+        // 2. Logika Filter berdasarkan Kategori
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // 3. Logika Pencarian Judul/Penulis
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->search . '%')
-                  ->orWhere('penulis', 'like', '%' . $request->search . '%')
-                  ->orWhere('kategori', 'like', '%' . $request->search . '%');
+                  ->orWhere('penulis', 'like', '%' . $request->search . '%');
             });
         }
 
-        $books = $query->latest()->get(); 
+        // 4. Ambil data dengan Pagination agar tidak berat (12 buku per halaman)
+        $books = $query->latest()->paginate(12)->withQueryString();
 
-        return view('books.index', compact('books'));
+        return view('books.index', compact('books', 'categories'));
     }
 
     /**
-     * Menampilkan DETAIL BUKU (Halaman yang tadinya Error)
+     * Menampilkan DETAIL BUKU
      */
     public function show($id)
     {
-        // Mengambil data buku berdasarkan ID
         $book = Book::findOrFail($id);
-
-        // Mengarahkan ke view detail buku
         return view('books.show', compact('book'));
     }
 
@@ -132,7 +138,7 @@ class BookController extends Controller
         Book::create([
             'judul' => $request->judul,
             'penulis' => $request->penulis,
-            'sinopsis' => $request->sinopsis, // Pastikan input name di form adalah 'sinopsis'
+            'sinopsis' => $request->sinopsis, 
             'kategori' => $request->kategori,
             'stok' => $request->stok,
             'cover' => $path, 
@@ -162,7 +168,6 @@ class BookController extends Controller
         if ($request->hasFile('cover')) {
             $request->validate(['cover' => 'image|mimes:jpeg,png,jpg|max:2048']);
             
-            // Hapus file lama jika ada
             if ($book->cover && Storage::disk('public')->exists($book->cover)) {
                 Storage::disk('public')->delete($book->cover);
             }
