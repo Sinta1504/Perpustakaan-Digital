@@ -8,6 +8,8 @@ use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+// --- IMPORT DOMPDF DI SINI ---
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LoanController extends Controller
 {
@@ -158,5 +160,26 @@ class LoanController extends Controller
         ]);
 
         return redirect()->route('pinjaman')->with('success', 'Terima kasih! Buku telah dikembalikan.');
+    }
+
+    /**
+     * FUNGSI DOWNLOAD E-BOOK (PDF)
+     */
+    public function downloadPdf($id)
+    {
+        // Ambil data pinjaman beserta relasi bukunya
+        $loan = Loan::with('book')->findOrFail($id);
+
+        // Pastikan hanya penggunanya sendiri yang bisa mendownload (Security Check)
+        if ($loan->user_id !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki akses untuk dokumen ini.');
+        }
+
+        // Memasukkan data buku ke dalam view khusus PDF
+        // View ini harus dibuat di resources/views/pdf/ebook_template.blade.php
+        $pdf = Pdf::loadView('pdf.ebook_template', compact('loan'));
+
+        // Download file dengan nama judul buku
+        return $pdf->download('E-Book - ' . $loan->book->judul . '.pdf');
     }
 }

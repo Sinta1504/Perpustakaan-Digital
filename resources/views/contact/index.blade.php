@@ -12,7 +12,8 @@
             <p class="text-slate-500 font-medium mt-3 text-lg">Kelola informasi kontak yang akan ditampilkan pada halaman bantuan User.</p>
         </div>
 
-        <form action="#" method="POST"> 
+        {{-- PERBAIKAN: Form sekarang mengarah ke route update --}}
+        <form action="{{ route('contact.update') }}" method="POST"> 
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 
@@ -22,7 +23,8 @@
                         <i class="fas fa-envelope text-2xl"></i>
                     </div>
                     <h4 class="font-black uppercase italic mb-4 text-sm tracking-widest">Update Email Resmi</h4>
-                    <input type="email" name="email" value="SUPPORT@ELIB.ID" 
+                    {{-- PERBAIKAN: Value menggunakan variabel $data dari controller --}}
+                    <input type="email" name="email" value="{{ $data['email'] ?? 'SUPPORT@ELIB.ID' }}" 
                            class="w-full bg-slate-800 border-none rounded-2xl py-4 px-5 text-blue-400 font-black focus:ring-2 focus:ring-blue-500 transition-all uppercase tracking-wider">
                 </div>
 
@@ -32,7 +34,8 @@
                         <i class="fab fa-whatsapp text-3xl text-white"></i>
                     </div>
                     <h4 class="font-black uppercase italic mb-4 text-sm tracking-widest text-blue-100">Update WhatsApp</h4>
-                    <input type="text" name="whatsapp" value="6282323531345" 
+                    {{-- PERBAIKAN: Value menggunakan variabel $data dari controller --}}
+                    <input type="text" name="whatsapp" value="{{ $data['whatsapp'] ?? '6282323531345' }}" 
                            class="w-full bg-white/10 border-none rounded-2xl py-4 px-5 text-white font-black placeholder:text-blue-200 focus:ring-2 focus:ring-white transition-all tracking-widest">
                     <p class="text-[10px] mt-3 font-bold text-blue-100 uppercase opacity-70 italic">* Gunakan kode negara tanpa tanda +</p>
                 </div>
@@ -43,7 +46,8 @@
                         <i class="fas fa-clock text-2xl"></i>
                     </div>
                     <h4 class="font-black text-slate-800 uppercase italic mb-4 text-sm tracking-widest">Set Jam Operasional</h4>
-                    <input type="text" name="jam_layanan" value="08.00 - 16.00" 
+                    {{-- PERBAIKAN: Value menggunakan variabel $data dari controller --}}
+                    <input type="text" name="jam_layanan" value="{{ $data['jam_layanan'] ?? '08.00 - 16.00' }}" 
                            class="w-full bg-slate-50 border-none rounded-2xl py-4 px-5 text-blue-600 font-black focus:ring-2 focus:ring-blue-500 transition-all">
                 </div>
             </div>
@@ -73,7 +77,9 @@
                 </div>
                 <h3 class="text-2xl font-black mb-4 uppercase italic">Email Resmi</h3>
                 <p class="text-slate-400 text-sm font-medium mb-8">Kirimkan pertanyaan teknis atau kerjasama melalui email resmi kami.</p>
-                <a href="mailto:SUPPORT@ELIB.ID" class="text-blue-400 font-black text-sm uppercase tracking-widest hover:text-white transition-colors underline decoration-2 underline-offset-8">SUPPORT@ELIB.ID</a>
+                <a href="mailto:{{ $data['email'] ?? 'SUPPORT@ELIB.ID' }}" class="text-blue-400 font-black text-sm uppercase tracking-widest hover:text-white transition-colors underline decoration-2 underline-offset-8">
+                    {{ $data['email'] ?? 'SUPPORT@ELIB.ID' }}
+                </a>
             </div>
 
             {{-- Card WhatsApp --}}
@@ -85,8 +91,9 @@
                 <p class="text-blue-100 text-sm font-medium mb-8">Tanyakan status peminjaman atau bantuan buku langsung kepada Admin kami.</p>
                 
                 @php
+                    $waNumber = $data['whatsapp'] ?? '6282323531345';
                     $pesanWA = "Halo Admin E-LIB, saya " . Auth::user()->name . " ingin bertanya mengenai layanan perpustakaan...";
-                    $urlWA = "https://wa.me/6282323531345?text=" . urlencode($pesanWA);
+                    $urlWA = "https://wa.me/" . $waNumber . "?text=" . urlencode($pesanWA);
                 @endphp
 
                 <a href="{{ $urlWA }}" target="_blank" class="inline-block bg-white text-blue-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
@@ -103,8 +110,8 @@
                 <p class="text-slate-500 text-sm font-medium mb-8">Admin kami aktif melayani pada jam operasional kantor berikut:</p>
                 
                 <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 group-hover:border-rose-100 transition-colors">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Senin - Jumat</p>
-                    <p class="text-3xl font-black text-blue-600 tracking-tighter">08.00 - 16.00</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Setiap Hari</p>
+                    <p class="text-3xl font-black text-blue-600 tracking-tighter">{{ $data['jam_layanan'] ?? '08.00 - 16.00' }}</p>
                     <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 italic tracking-wider">Waktu Indonesia Barat (WIB)</p>
                 </div>
             </div>

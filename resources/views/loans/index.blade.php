@@ -72,7 +72,7 @@
                     <tr class="bg-slate-50/50 border-b border-slate-100">
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Buku</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Tenggat</th>
-                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                        <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status & Unduh</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Respon / Ulasan</th>
                         <th class="px-8 py-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi</th>
                     </tr>
@@ -106,15 +106,26 @@
                             <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Sirkulasi</span>
                         </td>
 
+                        {{-- KOLOM STATUS DENGAN TOMBOL UNDUH (BAGIAN YANG DIPERBARUI) --}}
                         <td class="px-8 py-5">
-                            @if($loan->status === 'dipinjam')
-                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit">Sedang Dipinjam</span>
+                            @if($loan->status === 'dipinjam' || $loan->status === 'sedang dipinjam')
+                                <span class="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 block w-fit mb-3">
+                                    Sedang Dipinjam
+                                </span>
+                                
+                                {{-- Tombol Download PDF --}}
+                                <a href="{{ route('loans.download-pdf', $loan->id) }}" 
+                                   class="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-[10px] font-black uppercase tracking-wider transition-all group/dl">
+                                    <i class="fas fa-file-pdf text-sm group-hover/dl:scale-110 transition-transform"></i> 
+                                    <span class="underline decoration-blue-200 underline-offset-4">Unduh E-Book</span>
+                                </a>
                             @else
-                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">Sudah Kembali</span>
+                                <span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200 block w-fit">
+                                    Sudah Kembali
+                                </span>
                             @endif
                         </td>
 
-                        {{-- KOLOM ULASAN & RESPON ADMIN (BAGIAN YANG DIPERBAIKI) --}}
                         <td class="px-8 py-5">
                             @if($loan->ulasan)
                                 <div class="flex flex-col gap-2">
@@ -147,7 +158,7 @@
                         </td>
 
                         <td class="px-8 py-5 text-center">
-                            @if($loan->status === 'dipinjam')
+                            @if($loan->status === 'dipinjam' || $loan->status === 'sedang dipinjam')
                                 <button type="button" 
                                     onclick="openReturnModal('{{ $loan->id }}', '{{ addslashes($loan->book->judul ?? 'Buku') }}')"
                                     class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all shadow-lg uppercase tracking-widest flex items-center gap-2 mx-auto active:scale-95">
@@ -174,7 +185,7 @@
     </div>
 </div>
 
-{{-- MODAL PENGEMBALIAN BUKU --}}
+{{-- MODAL PENGEMBALIAN BUKU DAN SCRIPT TETAP SAMA SEPERTI SEBELUMNYA --}}
 <div id="returnModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl transform transition-all">
         <form id="returnForm" method="POST">
@@ -214,7 +225,6 @@
 
 <script>
     function openReturnModal(id, title) {
-        // Sesuaikan URL ini dengan route pengembalian Anda
         document.getElementById('returnForm').action = `/pinjaman/kembalikan/${id}`; 
         document.getElementById('modalBookTitle').innerText = title;
         
