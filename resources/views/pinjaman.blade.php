@@ -70,14 +70,13 @@
                                     <h4 class="text-3xl font-black text-slate-900 leading-tight uppercase italic mb-1">{{ $loan->book->judul }}</h4>
                                     <p class="text-sm text-blue-600 font-bold tracking-widest uppercase mb-4 italic">Karya: {{ $loan->book->penulis }}</p>
 
-                                    {{-- AKSES DIGITAL (TOMBOL PDF OTOMATIS) --}}
+                                    {{-- AKSES DIGITAL --}}
                                     @if($loan->status == 'dipinjam' || $loan->status == 'sedang dipinjam')
                                         <div class="flex flex-wrap gap-3 mb-6">
                                             <a href="{{ route('loans.download-pdf', $loan->id) }}" 
                                                class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center gap-2 shadow-lg shadow-blue-200">
                                                 <i class="fas fa-file-pdf"></i> Unduh E-Book (PDF)
                                             </a>
-                                            
                                             <div class="bg-blue-50 border border-blue-100 px-4 py-2.5 rounded-xl text-[9px] font-bold text-blue-600 uppercase italic flex items-center gap-2">
                                                 <i class="fas fa-magic"></i> Auto-Generated System
                                             </div>
@@ -116,7 +115,7 @@
                                 </div>
                             </div>
 
-                            {{-- Kondisi Form Pengembalian --}}
+                            {{-- KONDISI 1: Form Pengembalian (Jika Sedang Dipinjam) --}}
                             @if($loan->status == 'dipinjam' || $loan->status == 'sedang dipinjam')
                                 <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
                                     <h5 class="text-xs font-black uppercase tracking-[0.2em] mb-4 text-blue-400">Kembalikan Buku & Berikan Ulasan</h5>
@@ -145,29 +144,72 @@
                                         </div>
                                     </form>
                                 </div>
-                            @else
-                                {{-- Tampilan Respon Setelah Dikembalikan --}}
-                                <div class="bg-emerald-50 border border-emerald-100 rounded-[2.5rem] p-8">
-                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                        <div class="flex items-center gap-4">
-                                            <span class="text-3xl">🏆</span>
-                                            <div>
-                                                <p class="text-emerald-600 font-black text-[10px] uppercase tracking-widest">Ulasan Anda Telah Terkirim</p>
-                                                <p class="text-slate-600 text-sm font-bold italic mt-1">"{{ $loan->ulasan ?? 'Terima kasih telah membaca buku ini!' }}"</p>
-                                                <div class="flex gap-1 mt-1 text-amber-400 text-xs">
-                                                    @for($i=1; $i<=$loan->rating; $i++) ★ @endfor
+
+                            {{-- KONDISI 2: Tampilan Feedback & Balasan (Jika Sudah Kembali) --}}
+                            @elseif($loan->status == 'Sudah Dikembalikan' || $loan->status == 'kembali')
+                                @if($loan->feedback)
+                                    <div class="bg-emerald-50 border border-emerald-100 rounded-[2.5rem] p-8">
+                                        <div class="flex flex-col gap-6">
+                                            {{-- Baris Atas: Ulasan User --}}
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex items-center gap-4">
+                                                    <span class="text-3xl">🏆</span>
+                                                    <div>
+                                                        <p class="text-emerald-600 font-black text-[10px] uppercase tracking-widest">Ulasan Anda Telah Terkirim</p>
+                                                        <p class="text-slate-700 text-sm font-bold italic mt-1">"{{ $loan->feedback->komentar }}"</p>
+                                                        <div class="flex gap-1 mt-1 text-amber-400 text-xs">
+                                                            @for($i=1; $i<=5; $i++)
+                                                                <span>{{ $i <= $loan->feedback->rating ? '⭐' : '☆' }}</span>
+                                                            @endfor
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                
+                                                @if($loan->denda > 0)
+                                                <div class="bg-rose-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-rose-200">
+                                                    <p class="text-[8px] font-black uppercase opacity-80">Denda Dibayar:</p>
+                                                    <p class="text-xs font-black italic">Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
+                                                </div>
+                                                @endif
                                             </div>
+
+                                            {{-- Baris Bawah: Balasan Admin --}}
+                                            @if($loan->feedback->balasan_admin)
+                                                <div class="bg-slate-900 p-5 rounded-[2rem] text-white relative ml-6 md:ml-12">
+                                                    {{-- Bubble Tail --}}
+                                                    <div class="absolute -left-2 top-6 w-0 h-0 border-t-[10px] border-t-transparent border-r-[15px] border-r-slate-900 border-b-[10px] border-b-transparent"></div>
+                                                    
+                                                    <div class="flex items-start gap-3">
+                                                        <div class="bg-blue-600 p-2 rounded-lg">
+                                                            <i class="fas fa-user-shield text-[10px]"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-[9px] font-black text-blue-400 uppercase italic tracking-wider">Balasan Admin:</p>
+                                                            <p class="text-sm opacity-90 leading-relaxed mt-1 font-medium">{{ $loan->feedback->balasan_admin }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="ml-12">
+                                                    <p class="text-[10px] text-slate-400 font-bold uppercase italic flex items-center gap-2">
+                                                        <span class="relative flex h-2 w-2">
+                                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                                        </span>
+                                                        Menunggu tanggapan admin...
+                                                    </p>
+                                                </div>
+                                            @endif
                                         </div>
-                                        
-                                        @if($loan->denda > 0)
-                                        <div class="bg-rose-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-rose-200">
-                                            <p class="text-[8px] font-black uppercase opacity-80">Denda Dibayar:</p>
-                                            <p class="text-xs font-black italic">Rp {{ number_format($loan->denda, 0, ',', '.') }}</p>
-                                        </div>
-                                        @endif
                                     </div>
-                                </div>
+                                @else
+                                    {{-- Tombol Beri Ulasan Jika belum ada data feedback --}}
+                                    <div class="bg-slate-50 border border-dashed border-slate-200 rounded-[2.5rem] p-8 text-center">
+                                        <button onclick="openModal('{{ $loan->id }}')" class="bg-white border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl">
+                                            <i class="fas fa-pen-fancy mr-2"></i> Beri Ulasan Sekarang
+                                        </button>
+                                    </div>
+                                @endif
                             @endif
                         </div>
                     </div>

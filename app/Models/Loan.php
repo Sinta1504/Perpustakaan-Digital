@@ -9,6 +9,8 @@ class Loan extends Model
 {
     use HasFactory;
 
+    protected $table = 'loans'; 
+
     protected $fillable = [
         'user_id', 
         'book_id', 
@@ -20,38 +22,21 @@ class Loan extends Model
         'denda',           
         'rating',          
         'ulasan',          
-        'balasan_admin'  // <-- Gunakan nama ini agar sesuai dengan file Blade kamu
+        'balasan_admin' // Pastikan ini ada
     ];
 
-    /**
-     * Casting format kolom agar otomatis menjadi objek Carbon.
-     */
     protected $casts = [
         'tanggal_pinjam'  => 'date',
         'tanggal_kembali' => 'date', 
     ];
 
-    /**
-     * Accessor untuk menampilkan format denda dalam Rupiah.
-     */
-    public function getFormatDendaAttribute()
-    {
-        return 'Rp ' . number_format($this->denda ?? 0, 0, ',', '.');
-    }
-
-    /**
-     * Relasi ke model Book
-     */
     public function book()
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Book::class, 'book_id');
     }
 
-    /**
-     * Relasi ke model User
-     */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

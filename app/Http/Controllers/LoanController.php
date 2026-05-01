@@ -8,44 +8,31 @@ use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// Menggunakan library DomPDF untuk fitur download e-book
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class LoanController extends Controller
 {
     /**
-     * DASHBOARD: Menampilkan Statistik untuk Admin & Rekomendasi untuk User
+     * DASHBOARD: Statistik Admin & Rekomendasi User
      */
     public function dashboard()
     {
-        // 1. Persiapkan data dasar untuk User (Rekomendasi & Feedback)
         $recommendedBooks = Book::latest()->take(4)->get();
         $feedbacks = Feedback::with(['book', 'user'])->latest()->take(3)->get();
 
-        // 2. Logika Data Grafik (Peminjaman 5 Bulan Terakhir)
         $labels = [];
         $dataPinjaman = [];
         for ($i = 4; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $labels[] = $month->translatedFormat('F'); // Nama Bulan
+            $labels[] = $month->translatedFormat('F');
             $dataPinjaman[] = Loan::whereMonth('created_at', $month->month)
                                   ->whereYear('created_at', $month->year)
                                   ->count();
         }
 
-        // 3. Data untuk Buku Terpopuler (Top 3 berdasarkan jumlah peminjaman terbanyak)
-        $topBooks = Book::withCount('loans')
-                        ->orderBy('loans_count', 'desc')
-                        ->take(3)
-                        ->get();
+        $topBooks = Book::withCount('loans')->orderBy('loans_count', 'desc')->take(3)->get();
+        $leastBooks = Book::withCount('loans')->orderBy('loans_count', 'asc')->take(3)->get();
 
-        // 4. Data untuk Buku Kurang Diminati (Bottom 3 berdasarkan jumlah peminjaman terkecil)
-        $leastBooks = Book::withCount('loans')
-                        ->orderBy('loans_count', 'asc')
-                        ->take(3)
-                        ->get();
-
-        // Kirim semua data ke view dashboard.blade.php
         return view('dashboard', compact(
             'recommendedBooks', 
             'feedbacks', 
@@ -61,7 +48,8 @@ class LoanController extends Controller
      */
     public function index()
     {
-        $loans = Loan::with(['book'])
+        // PERBAIKAN: Menghapus 'feedback' dari eager loading karena kolom loan_id belum ada di database
+        $loans = Loan::with(['book']) 
                     ->where('user_id', Auth::id())
                     ->latest()
                     ->get();
@@ -76,6 +64,7 @@ class LoanController extends Controller
      */
     public function allLoans(Request $request)
     {
+        // PERBAIKAN: Menghapus 'feedback' agar tidak error saat query
         $query = Loan::with(['user', 'book']);
         
         if ($request->has('status') && $request->status != '' && $request->status != 'Semua Status') {
@@ -86,9 +75,6 @@ class LoanController extends Controller
         return view('admin.loans', compact('loans'));
     }
 
-    /**
-     * FORM PEMINJAMAN
-     */
     public function create($id)
     {
         $book = Book::findOrFail($id);
@@ -97,7 +83,6 @@ class LoanController extends Controller
 
     /**
      * PROSES SIMPAN PINJAMAN
-     * Validasi: Satu user hanya boleh meminjam satu judul buku yang sama sekali seumur hidup.
      */
     public function store(Request $request)
     {
@@ -109,24 +94,19 @@ class LoanController extends Controller
         $userId = Auth::id();
         $bookId = $request->book_id;
 
-        // --- VALIDASI INTI ---
-        // Mencari apakah ada data peminjaman (apapun statusnya: dipinjam/kembali)
-        // untuk user ini dengan buku ini.
         $hasEverBorrowed = Loan::where('user_id', $userId)
                                 ->where('book_id', $bookId)
                                 ->exists();
 
         if ($hasEverBorrowed) {
-            return redirect()->back()->with('error', 'Anda sudah pernah meminjam buku ini sebelumnya. Kebijakan perpustakaan hanya memperbolehkan meminjam setiap judul buku sebanyak satu kali.');
+            return redirect()->back()->with('error', 'Anda sudah pernah meminjam buku ini sebelumnya.');
         }
-        // --- END VALIDASI ---
 
         $book = Book::findOrFail($bookId);
         if ($book->stok <= 0) {
             return redirect()->back()->with('error', 'Maaf, stok buku ini sedang habis!');
         }
 
-        // Proses pembuatan data pinjaman
         Loan::create([
             'user_id'         => $userId,
             'book_id'         => $bookId,
@@ -136,14 +116,12 @@ class LoanController extends Controller
             'identitas'       => $request->identitas,
         ]);
 
-        // Kurangi stok buku
         $book->decrement('stok');
-
         return redirect()->route('pinjaman')->with('success', "Buku {$book->judul} berhasil dipinjam!");
     }
 
     /**
-     * PROSES KEMBALIKAN BUKU
+     * PROSES KEMBALIKAN BUKU (DENGAN DENDA & ULASAN)
      */
     public function returnBook(Request $request, $id)
     {
@@ -158,27 +136,35 @@ class LoanController extends Controller
             return redirect()->back()->with('info', 'Buku ini sudah dikembalikan.');
         }
 
+        $denda = 0;
+        $tglTenggat = \Carbon\Carbon::parse($loan->tanggal_kembali);
+        
+        if (now()->greaterThan($tglTenggat)) {
+            $hariTerlambat = now()->diffInDays($tglTenggat);
+            $denda = $hariTerlambat * 1000;
+        }
+
         $loan->update([
             'status' => 'kembali',
             'tanggal_nyata_kembali' => now(),
             'ulasan' => $request->ulasan,
             'rating' => $request->rating,
-            'denda'  => 0,
+            'denda'  => $denda,
         ]);
 
-        // Tambah stok buku kembali
         $loan->book->increment('stok');
 
-        // Simpan feedback/ulasan
+        // Note: Simpan feedback tetap jalan, namun tidak direlasikan via query 'with' di atas
         Feedback::create([
             'user_id'  => Auth::id(),
             'book_id'  => $loan->book_id,
+            'loan_id'  => $loan->id,
             'rating'   => $request->rating,
             'pesan'    => $request->ulasan, 
             'kategori' => 'Buku', 
         ]);
 
-        return redirect()->route('pinjaman')->with('success', 'Terima kasih! Buku telah dikembalikan.');
+        return redirect()->route('pinjaman')->with('success', 'Buku berhasil dikembalikan! ' . ($denda > 0 ? "Anda dikenakan denda Rp " . number_format($denda) : ""));
     }
 
     /**
@@ -186,18 +172,13 @@ class LoanController extends Controller
      */
     public function downloadPdf($id)
     {
-        // Ambil data pinjaman beserta relasi bukunya
         $loan = Loan::with('book')->findOrFail($id);
 
-        // Pastikan hanya penggunanya sendiri yang bisa mendownload (Security Check)
         if ($loan->user_id !== Auth::id()) {
             abort(403, 'Anda tidak memiliki akses untuk dokumen ini.');
         }
 
-        // Render view khusus PDF yang berada di resources/views/pdf/ebook_template.blade.php
         $pdf = Pdf::loadView('pdf.ebook_template', compact('loan'));
-
-        // Download file dengan format nama: E-Book - Judul Buku.pdf
         return $pdf->download('E-Book - ' . $loan->book->judul . '.pdf');
     }
 }

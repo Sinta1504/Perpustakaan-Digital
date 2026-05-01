@@ -94,7 +94,6 @@
             </div>
         </div>
 
-        {{-- SCRIPT UNTUK CHART --}}
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 const ctx = document.getElementById('loanChart').getContext('2d');
@@ -134,6 +133,8 @@
         {{-- ========================================== --}}
         {{-- TAMPILAN DASHBOARD USER --}}
         {{-- ========================================== --}}
+        
+        {{-- BANNER WELCOME --}}
         <div class="relative overflow-hidden bg-slate-900 rounded-[3rem] p-10 mb-12 text-white shadow-2xl">
             <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-600 rounded-full blur-3xl opacity-20"></div>
             
@@ -143,11 +144,40 @@
             </div>
         </div>
 
+        {{-- SEKSI GRAFIK USER (REVISI BARU) --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Card Grafik -->
+            <div class="lg:col-span-2 bg-white rounded-[3rem] p-8 shadow-sm border border-slate-50">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="font-black uppercase italic text-slate-900 text-xs tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full"></span> 
+                        📈 Statistik Membacamu
+                    </h4>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Aktivitas Terbaru</span>
+                </div>
+                <div class="h-[200px]">
+                    <canvas id="readerChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Card Info Cepat -->
+            <div class="bg-slate-900 rounded-[3rem] p-8 text-white flex flex-col justify-center relative overflow-hidden shadow-xl shadow-slate-200">
+                <div class="relative z-10">
+                    <h4 class="font-black uppercase italic text-[10px] mb-2 text-blue-400">Status Literasi</h4>
+                    <div class="text-5xl font-black mb-2 italic">12</div>
+                    <p class="text-[10px] leading-relaxed opacity-70 uppercase font-bold italic">Buku telah kamu selesaikan tahun ini!</p>
+                </div>
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-8xl rotate-12">📚</div>
+            </div>
+        </div>
+
+        {{-- JUDUL REKOMENDASI --}}
         <div class="flex items-center justify-between mb-10">
             <h2 class="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Rekomendasi Buku 📚</h2>
             <a href="{{ route('books.index') }}" class="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">Lihat Semua</a>
         </div>
 
+        {{-- GRID BUKU --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             @forelse($recommendedBooks as $book)
                 <div class="bg-white rounded-[2.5rem] p-5 shadow-sm border border-slate-50 transition-all hover:shadow-xl hover:-translate-y-2 group">
@@ -157,7 +187,7 @@
                              onerror="this.onerror=null; this.src='https://placehold.co/400x600?text=No+Cover';">
                     </div>
                     <div class="px-2">
-                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest italic mb-1 block text-truncate">{{ $book->kategori ?? 'Umum' }}</span>
+                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest italic mb-1 block truncate">{{ $book->kategori ?? 'Umum' }}</span>
                         <h3 class="font-black text-slate-800 uppercase text-sm leading-tight line-clamp-2 mb-4 h-10 group-hover:text-blue-600 transition-colors">{{ $book->judul }}</h3>
                         
                         <a href="{{ route('books.show', $book->id) }}" 
@@ -172,6 +202,35 @@
                 </div>
             @endforelse
         </div>
+
+        {{-- SCRIPT CHART USER --}}
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const ctxUser = document.getElementById('readerChart').getContext('2d');
+                new Chart(ctxUser, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($labels) !!}, 
+                        datasets: [{
+                            label: 'Buku Dipinjam',
+                            data: {!! json_encode($dataPinjaman) !!}, 
+                            backgroundColor: '#3b82f6', 
+                            borderRadius: 10,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f8fafc' }, ticks: { font: { weight: 'bold' } } },
+                            x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+                        }
+                    }
+                });
+            });
+        </script>
 
     @endif
 
